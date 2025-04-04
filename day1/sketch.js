@@ -1,4 +1,4 @@
-let seed, fft, soundFile;
+let seed, fft, mic; // Changed soundFile to mic
 let currentPalette = [];
 let palettes = [];
 let audioActive = false;
@@ -8,8 +8,7 @@ function preload() {
   // Load color palettes from CSV
   colorsTable = loadTable('colors.csv', 'csv', 'header');
   
-  // Load your song file (replace 'your-song.mp3' with your file path)
-  soundFile = loadSound('day-1-genuary.mp3');
+  // Removed soundFile loading
 }
 
 function setup() {
@@ -28,12 +27,13 @@ function setup() {
     palettes.push(palette);
   }
   currentPalette = palettes[0];
+
+  // Initialize microphone input
+  mic = new p5.AudioIn();
   
-  // Set up FFT and connect it to the sound file
+  // Set up FFT and connect it to the microphone input
   fft = new p5.FFT();
-  soundFile.disconnect(); // Disconnect from default output
-  soundFile.connect(fft); // Connect to FFT for analysis
-  soundFile.connect(); // Reconnect to the default output
+  mic.connect(fft); // Connect mic to FFT
 }
 
 function draw() {
@@ -54,11 +54,11 @@ function analyzeBeat() {
   
   // Analyze bass frequencies (60Hz - 240Hz)
   let bassEnergy = fft.getEnergy(60, 240);
-  let beatThreshold = 225;
+  let beatThreshold = 155;
   
   // Analyze high frequencies (2000Hz - 5000Hz)
   let highEnergy = fft.getEnergy(300, 1000);
-  let highThreshold = 185;
+  let highThreshold = 105;
   
   // React to bass beats
   if(bassEnergy > beatThreshold) {
@@ -112,11 +112,16 @@ function mousePressed() {
   currentPalette = palettes[floor(random(palettes.length))];
   
   if(!audioActive) {
-    // Start the audio context and play the song
+    // Start the audio context and microphone input
     userStartAudio().then(() => {
-      soundFile.play();
+      mic.start(); // Start microphone input
       audioActive = true;
+      console.log("Microphone input started."); // Optional: Log confirmation
     });
+  } else {
+     // If audio is already active, maybe toggle mic on/off or change palette?
+     // For now, just changing palette like before.
+     currentPalette = palettes[floor(random(palettes.length))];
   }
 }
 
@@ -126,15 +131,4 @@ function keyPressed() {
   }
 }
 
-function keyPressed() {
-  // Play/Pause with spacebar (key code 32)
-  if (keyCode === 32) { // Spacebar
-    if (soundFile.isPlaying()) {
-      soundFile.pause();
-    } else {
-      soundFile.play();
-   
-    }
-  }
-
-}
+// Removed the second, redundant keyPressed function that handled soundFile playback
