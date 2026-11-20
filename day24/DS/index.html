@@ -1,0 +1,61 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Geometric Art for Genuary Day 24 - Circle-based Audio Reactive Visualization">
+    <title>Genuary Day 24 - Circle Geometry</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            color: white;
+            background-color: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        #start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #ff3366, #ff8a33);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        #start-button:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 51, 102, 0.6);
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <script src="sketch.js"></script>
+</head>
+  <body>
+    <main>
+    </main>
+  </body>
+</html>

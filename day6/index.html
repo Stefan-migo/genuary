@@ -1,0 +1,95 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.1/lib/p5.js"></script>
+    <script src="sketch.js"></script>
+    <title>Primitive Landscape Generator</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+      }
+      #container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .controls {
+        background-color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        width: 800px;
+        max-width: 100%;
+      }
+      .control-group {
+        margin-bottom: 10px;
+      }
+      label {
+        display: inline-block;
+        width: 150px;
+        font-weight: bold;
+      }
+      button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      canvas {
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div class="controls">
+        <h1>Primitive Landscape Generator</h1>
+        <p>Upload an image to transform it into a landscape made of primitive shapes</p>
+        
+        <div class="control-group">
+          <input type="file" id="imageUpload" accept="image/*">
+        </div>
+        
+        <div class="control-group">
+          <label for="detailSlider">Detail Level:</label>
+          <input type="range" id="detailSlider" min="5" max="50" value="15">
+          <span id="detailValue">15</span>
+        </div>
+        
+        <div class="control-group">
+          <label for="shapeSelect">Shape Types:</label>
+          <select id="shapeSelect" multiple>
+            <option value="rect" selected>Rectangles</option>
+            <option value="ellipse" selected>Ellipses</option>
+            <option value="triangle" selected>Triangles</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label for="colorMode">Color Mode:</label>
+          <select id="colorMode">
+            <option value="average">Average Color</option>
+            <option value="dominant">Dominant Color</option>
+            <option value="random">Random Variation</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <button id="generateBtn">Generate</button>
+          <button id="saveBtn">Save Image</button>
+          <button id="toggleBtn">Toggle Original</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

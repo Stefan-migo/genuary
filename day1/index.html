@@ -3,13 +3,105 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>day 1</title>
+	<title>day 1 - Phase 3 Enhanced</title>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+	<!-- Core p5.js libraries -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.js"></script>
+	
+	<!-- Phase 3 Enhancement Libraries -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.min.js"></script>
+	
+	<!-- Custom CSS for enhanced UI -->
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background: #000;
+			font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+		}
+		
+		.dg.ac {
+			z-index: 1000 !important;
+		}
+		
+		.help-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.9);
+			color: white;
+			z-index: 2000;
+			display: none;
+			overflow-y: auto;
+			padding: 20px;
+			box-sizing: border-box;
+		}
+		
+		.export-controls {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			z-index: 1001;
+		}
+		
+		.export-btn {
+			background: #4CAF50;
+			border: none;
+			color: white;
+			padding: 10px 20px;
+			margin: 5px;
+			cursor: pointer;
+			border-radius: 4px;
+			font-family: inherit;
+		}
+		
+		.export-btn:hover {
+			background: #45a049;
+		}
+		
+		.recording {
+			background: #f44336 !important;
+		}
+		
+		.midi-status {
+			position: fixed;
+			top: 20px;
+			left: 20px;
+			background: rgba(0, 0, 0, 0.8);
+			color: white;
+			padding: 10px;
+			border-radius: 4px;
+			z-index: 1001;
+			font-size: 12px;
+		}
+	</style>
 </head>
 
 <body>
+	<!-- Help Overlay -->
+	<div id="helpOverlay" class="help-overlay">
+		<h2>🎮 Day1 Genuary - Phase 3 Controls</h2>
+		<div id="helpContent"></div>
+		<p><strong>Press ESC or F1 to close this help</strong></p>
+	</div>
+	
+	<!-- Export Controls -->
+	<div class="export-controls">
+		<button id="exportPNG" class="export-btn">📷 PNG</button>
+		<button id="exportHiRes" class="export-btn">🖼️ Hi-Res</button>
+		<button id="recordGIF" class="export-btn">🎬 GIF</button>
+		<button id="recordVideo" class="export-btn">📹 Video</button>
+	</div>
+	
+	<!-- MIDI Status -->
+	<div id="midiStatus" class="midi-status" style="display: none;">
+		MIDI: Disconnected
+	</div>
+
 	<script src="sketch.js"></script>
 </body>
 
