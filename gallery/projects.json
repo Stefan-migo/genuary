@@ -1,0 +1,300 @@
+{
+  "event": "Genuary 2025",
+  "source": "https://genuary.art/2025/prompts",
+  "description": "One generative sketch per day of January 2025. Day 11 was never attempted; days 28-31 are missing. The day 23 Google version needs a Node backend and is not listed here.",
+  "projects": [
+    {
+      "slug": "day1",
+      "day": 1,
+      "prompt": "Vertical or horizontal lines only.",
+      "credit": "Stranger in the Q",
+      "path": "day1/index.html",
+      "source": "day1/sketch.js",
+      "tags": ["p5.js", "p5.sound", "dat.GUI", "microphone"],
+      "note": "Driven by microphone input, and can export PNG, GIF and video."
+    },
+    {
+      "slug": "day2",
+      "day": 2,
+      "prompt": "Layers upon layers upon layers.",
+      "credit": "Monokai",
+      "path": "day2/index.html",
+      "source": "day2/sketch.js",
+      "tags": ["p5.js", "p5.sound", "audio"],
+      "note": "Audio-reactive; plays the bundled track and layers shapes on the beat."
+    },
+    {
+      "slug": "day3",
+      "day": 3,
+      "prompt": "Exactly 42 lines of code.",
+      "credit": "Roni Kaufman",
+      "path": "day3/index.html",
+      "source": "day3/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day4",
+      "day": 4,
+      "prompt": "Black on black.",
+      "credit": "Stranger in the Q",
+      "path": "day4/index.html",
+      "source": "day4/sketch.js",
+      "tags": ["p5.js", "images"],
+      "note": "Uses the bundled source photographs as luminance masks."
+    },
+    {
+      "slug": "day5",
+      "day": 5,
+      "prompt": "Isometric Art (No vanishing points).",
+      "credit": "P1xelboy",
+      "path": "day5/index.html",
+      "source": "day5/sketch.js",
+      "tags": ["p5.js", "images"]
+    },
+    {
+      "slug": "day5-v2",
+      "day": 5,
+      "variant": "v2",
+      "prompt": "Isometric Art (No vanishing points).",
+      "credit": "P1xelboy",
+      "path": "day5/v2/index.html",
+      "source": "day5/v2/sketch.js",
+      "tags": ["p5.js"],
+      "note": "Second take on the same prompt."
+    },
+    {
+      "slug": "day6",
+      "day": 6,
+      "prompt": "Make a landscape using only primitive shapes.",
+      "credit": "Jonathan Barbeau",
+      "path": "day6/index.html",
+      "source": "day6/sketch.js",
+      "tags": ["p5.js", "image upload"],
+      "note": "Upload an image and it rebuilds it out of rectangles, ellipses and triangles."
+    },
+    {
+      "slug": "day7",
+      "day": 7,
+      "prompt": "Use software that is not intended to create art or images.",
+      "credit": "Camille Roux",
+      "path": "day7/index.html",
+      "source": "day7/sketch.js",
+      "tags": ["p5.js"],
+      "note": "Stub only: draws a flat background. Kept as an unfinished entry."
+    },
+    {
+      "slug": "day8",
+      "day": 8,
+      "prompt": "Draw one million of something.",
+      "credit": "Piter Pasma",
+      "path": "day8/index.html",
+      "source": "day8/sketch.js",
+      "tags": ["p5.js", "pixels"],
+      "note": "Writes 100.000 points straight into the pixel buffer; heavy on CPU."
+    },
+    {
+      "slug": "day9",
+      "day": 9,
+      "prompt": "The textile design patterns of public transport seating.",
+      "credit": "Piter Pasma",
+      "path": "day9/index.html",
+      "source": "day9/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day10",
+      "day": 10,
+      "prompt": "You can only use TAU in your code, no other number allowed.",
+      "credit": "Darien Brito",
+      "path": "day10/index.html",
+      "source": "day10/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day12",
+      "day": 12,
+      "prompt": "Subdivision.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day12/index.html",
+      "source": "day12/sketch.js",
+      "tags": ["p5.js", "d3-delaunay"],
+      "note": "Recursive Voronoi subdivision."
+    },
+    {
+      "slug": "day13",
+      "day": 13,
+      "prompt": "Triangles and nothing else.",
+      "credit": "Heeey",
+      "path": "day13/index.html",
+      "source": "day13/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day14",
+      "day": 14,
+      "prompt": "Pure black and white. No gray.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day14/index.html",
+      "source": "day14/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day15",
+      "day": 15,
+      "prompt": "Design a rug.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day15/index.html",
+      "source": "day15/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day16",
+      "day": 16,
+      "prompt": "Generative palette.",
+      "credit": "Stranger in the Q",
+      "path": "day16/index.html",
+      "source": "day16/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day17",
+      "day": 17,
+      "prompt": "What happens if pi=4?",
+      "credit": "Roni Kaufman",
+      "path": "day17/index.html",
+      "source": "day17/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day18",
+      "day": 18,
+      "prompt": "What does wind look like?",
+      "credit": "Melissa Wiederrecht",
+      "path": "day18/index.html",
+      "source": "day18/sketch.js",
+      "tags": ["p5.js", "p5.sound", "audio"],
+      "note": "Plays four bell samples as the wind changes direction."
+    },
+    {
+      "slug": "day19",
+      "day": 19,
+      "prompt": "Op Art.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day19/index.html",
+      "source": "day19/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day20",
+      "day": 20,
+      "prompt": "Generative Architecture.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day20/index.html",
+      "source": "day20/sketch.js",
+      "tags": ["p5.js", "p5.easycam", "WEBGL"],
+      "note": "Three-dimensional; drag to orbit the camera."
+    },
+    {
+      "slug": "day21",
+      "day": 21,
+      "prompt": "Create a collision detection system (no libraries allowed).",
+      "credit": "Darien Brito",
+      "path": "day21/index.html",
+      "source": "day21/sketch.js",
+      "tags": ["p5.js"],
+      "note": "Hand-written collision resolution, no physics library."
+    },
+    {
+      "slug": "day22",
+      "day": 22,
+      "prompt": "Gradients only.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day22/index.html",
+      "source": "day22/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day23-deepseek",
+      "day": 23,
+      "variant": "deepseek",
+      "prompt": "Inspired by brutalism.",
+      "credit": "Melissa Wiederrecht, Roni Kaufman",
+      "path": "day23/version deepseek/index.html",
+      "source": "day23/version deepseek/sketch.js",
+      "tags": ["p5.js"],
+      "note": "Version produced with DeepSeek."
+    },
+    {
+      "slug": "day23-gpt",
+      "day": 23,
+      "variant": "gpt",
+      "prompt": "Inspired by brutalism.",
+      "credit": "Melissa Wiederrecht, Roni Kaufman",
+      "path": "day23/version gpt/index.html",
+      "source": "day23/version gpt/sketch.js",
+      "tags": ["p5.js"],
+      "note": "Version produced with GPT."
+    },
+    {
+      "slug": "day24-ds",
+      "day": 24,
+      "variant": "deepseek",
+      "prompt": "Geometric art - pick either a circle, rectangle, or triangle and use only that geometric shape.",
+      "credit": "Bruce Holmer",
+      "path": "day24/DS/index.html",
+      "source": "day24/DS/sketch.js",
+      "tags": ["p5.js", "p5.sound"],
+      "note": "Version produced with DeepSeek."
+    },
+    {
+      "slug": "day24-google",
+      "day": 24,
+      "variant": "google",
+      "prompt": "Geometric art - pick either a circle, rectangle, or triangle and use only that geometric shape.",
+      "credit": "Bruce Holmer",
+      "path": "day24/google/index.html",
+      "source": "day24/google/sketch.js",
+      "tags": ["p5.js"],
+      "note": "Version produced with Gemini. Static, no backend needed."
+    },
+    {
+      "slug": "day24-gpt",
+      "day": 24,
+      "variant": "gpt",
+      "prompt": "Geometric art - pick either a circle, rectangle, or triangle and use only that geometric shape.",
+      "credit": "Bruce Holmer",
+      "path": "day24/GPT/index.html",
+      "source": "day24/GPT/sketch.js",
+      "tags": ["p5.js"],
+      "note": "Version produced with GPT."
+    },
+    {
+      "slug": "day25",
+      "day": 25,
+      "prompt": "One line that may or may not intersect itself",
+      "credit": "Bruce Holmer, Chris Barber (code_rgb), Heeey, Monokai",
+      "path": "day25/index.html",
+      "source": "day25/sketch.js",
+      "tags": ["p5.js"]
+    },
+    {
+      "slug": "day26",
+      "day": 26,
+      "prompt": "Symmetry.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day26/index.html",
+      "source": "day26/sketch.js",
+      "tags": ["p5.js", "p5.sound", "interactive"],
+      "note": "Draw with the mouse; keys 2-9 set the symmetry segments."
+    },
+    {
+      "slug": "day27",
+      "day": 27,
+      "prompt": "Make something interesting with no randomness or noise or trig.",
+      "credit": "Melissa Wiederrecht",
+      "path": "day27/index.html",
+      "source": "day27/sketch.js",
+      "tags": ["p5.js"]
+    }
+  ]
+}

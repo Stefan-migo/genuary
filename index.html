@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Genuary 2025 — generative sketches</title>
+	<meta name="description" content="Every sketch made for the Genuary 2025 daily prompt challenge, browsable in the browser.">
+	<link rel="stylesheet" href="gallery/style.css">
+</head>
+
+<body>
+	<header class="site-header">
+		<div class="wrap">
+			<p class="kicker">Genuary 2025</p>
+			<h1>One generative sketch per day of January</h1>
+			<p class="lede">
+				Built with p5.js, one folder per prompt. Pick a card to run the sketch right here;
+				audio, microphone and 3D pieces ask for what they need when they start.
+			</p>
+			<p class="stats" id="stats">Loading the collection…</p>
+		</div>
+	</header>
+
+	<main>
+		<div class="wrap">
+			<p class="status" id="status" role="status">Loading…</p>
+			<div class="grid" id="grid"></div>
+		</div>
+	</main>
+
+	<div class="viewer" id="viewer" hidden>
+		<div class="viewer__bar">
+			<div class="viewer__meta">
+				<span class="viewer__day" id="viewerDay"></span>
+				<span class="viewer__prompt" id="viewerPrompt"></span>
+			</div>
+			<div class="viewer__actions">
+				<a class="btn" id="viewerSource" target="_blank" rel="noopener">Source</a>
+				<a class="btn" id="viewerOpen" target="_blank" rel="noopener">Open in a tab</a>
+				<button class="btn" id="viewerClose" type="button">Close (Esc)</button>
+			</div>
+		</div>
+		<div class="viewer__stage" id="viewerStage"></div>
+	</div>
+
+	<footer class="site-footer">
+		<div class="wrap">
+			<p>
+				Prompts and credits from <a href="https://genuary.art/2025/prompts" target="_blank"
+					rel="noopener">genuary.art</a>. Every sketch lives in its own folder next to this page.
+			</p>
+		</div>
+	</footer>
+
+	<script type="module" src="gallery/app.js"></script>
+</body>
+
+</html>
