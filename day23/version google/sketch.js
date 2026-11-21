@@ -252,7 +252,7 @@ async function updateQuote() {
   try {
     // Make a POST request to your backend endpoint
     // Ensure your backend server is running and accessible at this path
-    const response = await fetch('http://localhost:3000/api/generate-phrase', {
+    const response = await fetch('/api/generate-phrase', {
       method: 'POST', // Or GET if your backend uses GET
       headers: {
         // Content-Type might not be strictly necessary if not sending a body,

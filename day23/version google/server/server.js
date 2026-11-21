@@ -1,49 +1,26 @@
-// --- THIS IS SERVER-SIDE CODE (e.g., server.js) ---
-require('dotenv').config(); // Load API key from .env file
+// Legacy local runner for the day 23 sketch: express + the copy in public/.
+// The deployment path is the serverless function in api/generate-phrase.js;
+// both share the same provider code in lib/deepseek.js.
+require('dotenv').config();
 const express = require('express');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { generatePhrase, PhraseError } = require('../../../lib/deepseek.js');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Access your API key as an environment variable (securely)
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-
-app.use(express.json());
-// Serve your static P5.js files (assuming they are in a 'public' folder)
 app.use(express.static('public'));
 
-// The API endpoint your P5 sketch will call
-app.post('/api/generate-phrase', async (req, res) => {
-  try {
-    // Choose the Gemini model (e.g., gemini-pro)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    // Construct the prompt
-    const prompt = `Generate a single, short, poetic or philosophical phrase (under 20 words) inspired by brutalism architecture, in a charles bukowsky style . No quotation marks.`;
-
-    console.log("Received request, calling Gemini...");
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    console.log("Gemini response:", text);
-    res.json({ phrase: text.trim() }); // Send the generated phrase back to P5.js
-
-  } catch (error) {
-    console.error("Error calling Google AI:", error);
-    // Extract more specific error info if available from Google's SDK error structure
-    let errorMessage = "Failed to generate phrase";
-    if (error.message) {
-         errorMessage += `: ${error.message}`;
-    }
-    res.status(500).json({ error: errorMessage });
-  }
+app.post('/api/generate-phrase', async (request, response) => {
+	try {
+		response.json({ phrase: await generatePhrase() });
+	} catch (error) {
+		const status = error instanceof PhraseError ? error.status : 500;
+		console.error('generate-phrase failed:', error.message);
+		response.status(status).json({ error: error.message });
+	}
 });
 
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
-  console.log(`Serving P5 sketch from 'public' directory.`);
-  console.log(`API endpoint available at POST /api/generate-phrase`);
+	console.log(`Server listening at http://localhost:${port}`);
+	console.log('Serving the p5 sketch from the public/ directory.');
 });

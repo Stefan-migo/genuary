@@ -15,10 +15,15 @@ gallery/
   app.js                   renders the grid and the iframe viewer
   style.css                dark editorial layout
   thumbs/<slug>.png        one generated preview per entry
+api/
+  generate-phrase.js      serverless Web Handler for the day 23 phrase endpoint
+lib/
+  deepseek.js              shared DeepSeek API client
 tools/
+  serve.mjs                local gallery and API server on one origin
   capture-thumbnails.mjs   renders every sketch in headless Chrome into gallery/thumbs/
   check-gallery.mjs        verifies data, files, thumbnails, HTTP and rendered DOM
-  lib/static-server.mjs    tiny dependency-free static server used by both scripts
+  lib/static-server.mjs    tiny dependency-free static server used by local tools
 day1/ … day27/             one folder per prompt (day11 was never made)
   index.html               entry point, loads p5.js from a CDN
   sketch.js                the sketch itself
@@ -35,14 +40,33 @@ credits are quoted from the official list.
 ## Run it locally
 
 The gallery fetches `gallery/projects.json`, so it needs HTTP — opening `index.html` from the
-filesystem will fail on CORS. Any static server works:
+filesystem will fail on CORS. The dependency-free local server serves the gallery and day 23
+API on one origin:
 
 ```bash
-python3 -m http.server 8000
+node tools/serve.mjs
 ```
 
-Then open http://localhost:8000. Sketches are loaded in an iframe on demand; the pieces that
-need the microphone or play audio ask the browser for permission when they start.
+Open the gallery URL it prints (by default http://localhost:3000). Sketches are loaded in an
+iframe on demand; the pieces that need the microphone or play audio ask the browser for
+permission when they start. As a static-only fallback, run `python3 -m http.server 8000`;
+day 23 then uses its built-in quote because the API route is unavailable.
+
+### Day 23 environment
+
+The local server reads a root `.env` file (git-ignored). Set `DEEPSEEK_API_KEY` there to enable
+generated phrases. `DEEPSEEK_MODEL` and `DEEPSEEK_BASE_URL` are optional; `PORT` changes the
+local server port (default `3000`). Existing environment variables take precedence over `.env`.
+
+### Deploy on Vercel
+
+Import this repository with Root Directory set to the repository root, no build step, and no
+framework preset. Vercel deploys `api/generate-phrase.js` as a serverless function. Set
+`DEEPSEEK_API_KEY` (and optionally `DEEPSEEK_MODEL`) in Project Settings → Environment
+Variables; changing an environment variable requires a redeploy. The browser only ever talks
+to `/api/generate-phrase`, so the key never ships to the browser. A public endpoint using a
+free-tier provider key can be abused, so monitor usage and protect the key. If the function
+fails, the sketch falls back to its built-in quote.
 
 ## Regenerate thumbnails
 
@@ -82,12 +106,13 @@ control.
 - `day7` is a stub: it only clears the canvas. It is kept as an honest record.
 - `day1` reads the microphone, `day2` and `day18` play bundled audio, `day8` writes 100.000
   points into the pixel buffer and `day20` is WEBGL. Expect them to be the heaviest.
-- `day23/version google` is the only piece with a backend: it asks Gemini for a phrase on each
-  request. It is excluded from the gallery and documented in
-  `day23/version google/server/README.md` — create your own `.env` there, it is git-ignored.
+- `day23/version google` uses the root API function in deployment and the same handler via
+  `node tools/serve.mjs` locally. `day23/version google/server/` is a legacy local runner kept
+  for reference; the deployment path is the root `api/` function. The sketch falls back to a
+  built-in quote when the function is unavailable.
 
 ## Requirements
 
 - A browser. p5.js and the other libraries load from CDNs, so the sketches need a connection.
-- Python 3 or any static file server, to view the gallery.
+- Node.js 18+ to run `node tools/serve.mjs`; Python 3 is an optional static-only fallback.
 - Node.js 18+ and Chrome, only for the thumbnail and verification scripts.

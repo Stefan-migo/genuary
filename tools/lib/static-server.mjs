@@ -1,4 +1,5 @@
 import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import { stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, join, resolve, sep } from 'node:path';
@@ -26,12 +27,37 @@ const CONTENT_TYPES = {
  * `python3 -m http.server` does so headless Chrome can load the sketches
  * without CORS surprises.
  */
-export async function startStaticServer(root) {
+export async function startStaticServer(root, { routes = {}, port = 0 } = {}) {
 	const base = resolve(root);
+
+	// Method-specific keys win; any other method on the same path still reaches
+	// the handler, which is what Vercel does with a function route.
+	const byPath = new Map();
+	for (const [key, fn] of Object.entries(routes)) {
+		byPath.set(key.slice(key.indexOf(' ') + 1), fn);
+	}
 
 	const server = createServer(async (request, response) => {
 		try {
 			const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+			const routeKey = `${request.method} ${url.pathname}`;
+			const handler = routes[routeKey] ?? byPath.get(url.pathname);
+
+			if (handler) {
+				const body = request.method === 'GET' || request.method === 'HEAD'
+					? undefined
+					: Readable.toWeb(request);
+				const webRequest = new Request(`http://127.0.0.1:${server.address().port}${request.url}`, {
+					method: request.method,
+					headers: request.headers,
+					...(body ? { body, duplex: 'half' } : {}),
+				});
+				const webResponse = await handler(webRequest);
+				response.writeHead(webResponse.status, Object.fromEntries(webResponse.headers));
+				response.end(Buffer.from(await webResponse.arrayBuffer()));
+				return;
+			}
+
 			const relative = decodeURIComponent(url.pathname).replace(/^\/+/, '');
 			let target = resolve(join(base, relative || 'index.html'));
 
@@ -66,13 +92,13 @@ export async function startStaticServer(root) {
 
 	await new Promise((ok, fail) => {
 		server.once('error', fail);
-		server.listen(0, '127.0.0.1', ok);
+		server.listen(port, '127.0.0.1', ok);
 	});
 
-	const { port } = server.address();
+	const actualPort = server.address().port;
 
 	return {
-		origin: `http://127.0.0.1:${port}`,
+		origin: `http://127.0.0.1:${actualPort}`,
 		close: () => new Promise((ok) => server.close(ok)),
 	};
 }
