@@ -10,7 +10,12 @@
       "credit": "Stranger in the Q",
       "path": "day1/index.html",
       "source": "day1/sketch.js",
-      "tags": ["p5.js", "p5.sound", "dat.GUI", "microphone"],
+      "tags": [
+        "p5.js",
+        "p5.sound",
+        "dat.GUI",
+        "microphone"
+      ],
       "note": "Driven by microphone input, and can export PNG, GIF and video."
     },
     {
@@ -20,7 +25,11 @@
       "credit": "Monokai",
       "path": "day2/index.html",
       "source": "day2/sketch.js",
-      "tags": ["p5.js", "p5.sound", "audio"],
+      "tags": [
+        "p5.js",
+        "p5.sound",
+        "audio"
+      ],
       "note": "Audio-reactive; plays the bundled track and layers shapes on the beat."
     },
     {
@@ -30,7 +39,9 @@
       "credit": "Roni Kaufman",
       "path": "day3/index.html",
       "source": "day3/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day4",
@@ -39,7 +50,10 @@
       "credit": "Stranger in the Q",
       "path": "day4/index.html",
       "source": "day4/sketch.js",
-      "tags": ["p5.js", "images"],
+      "tags": [
+        "p5.js",
+        "images"
+      ],
       "note": "Uses the bundled source photographs as luminance masks."
     },
     {
@@ -49,7 +63,10 @@
       "credit": "P1xelboy",
       "path": "day5/index.html",
       "source": "day5/sketch.js",
-      "tags": ["p5.js", "images"]
+      "tags": [
+        "p5.js",
+        "images"
+      ]
     },
     {
       "slug": "day5-v2",
@@ -59,7 +76,9 @@
       "credit": "P1xelboy",
       "path": "day5/v2/index.html",
       "source": "day5/v2/sketch.js",
-      "tags": ["p5.js"],
+      "tags": [
+        "p5.js"
+      ],
       "note": "Second take on the same prompt."
     },
     {
@@ -69,7 +88,10 @@
       "credit": "Jonathan Barbeau",
       "path": "day6/index.html",
       "source": "day6/sketch.js",
-      "tags": ["p5.js", "image upload"],
+      "tags": [
+        "p5.js",
+        "image upload"
+      ],
       "note": "Upload an image and it rebuilds it out of rectangles, ellipses and triangles."
     },
     {
@@ -79,7 +101,9 @@
       "credit": "Camille Roux",
       "path": "day7/index.html",
       "source": "day7/sketch.js",
-      "tags": ["p5.js"],
+      "tags": [
+        "p5.js"
+      ],
       "note": "Stub only: draws a flat background. Kept as an unfinished entry."
     },
     {
@@ -89,7 +113,10 @@
       "credit": "Piter Pasma",
       "path": "day8/index.html",
       "source": "day8/sketch.js",
-      "tags": ["p5.js", "pixels"],
+      "tags": [
+        "p5.js",
+        "pixels"
+      ],
       "note": "Writes 100.000 points straight into the pixel buffer; heavy on CPU."
     },
     {
@@ -99,7 +126,9 @@
       "credit": "Piter Pasma",
       "path": "day9/index.html",
       "source": "day9/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day10",
@@ -108,7 +137,9 @@
       "credit": "Darien Brito",
       "path": "day10/index.html",
       "source": "day10/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day12",
@@ -117,7 +148,10 @@
       "credit": "Melissa Wiederrecht",
       "path": "day12/index.html",
       "source": "day12/sketch.js",
-      "tags": ["p5.js", "d3-delaunay"],
+      "tags": [
+        "p5.js",
+        "d3-delaunay"
+      ],
       "note": "Recursive Voronoi subdivision."
     },
     {
@@ -127,7 +161,9 @@
       "credit": "Heeey",
       "path": "day13/index.html",
       "source": "day13/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day14",
@@ -136,7 +172,9 @@
       "credit": "Melissa Wiederrecht",
       "path": "day14/index.html",
       "source": "day14/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day15",
@@ -145,7 +183,9 @@
       "credit": "Melissa Wiederrecht",
       "path": "day15/index.html",
       "source": "day15/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day16",
@@ -154,7 +194,9 @@
       "credit": "Stranger in the Q",
       "path": "day16/index.html",
       "source": "day16/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day17",
@@ -163,7 +205,9 @@
       "credit": "Roni Kaufman",
       "path": "day17/index.html",
       "source": "day17/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day18",
@@ -172,7 +216,11 @@
       "credit": "Melissa Wiederrecht",
       "path": "day18/index.html",
       "source": "day18/sketch.js",
-      "tags": ["p5.js", "p5.sound", "audio"],
+      "tags": [
+        "p5.js",
+        "p5.sound",
+        "audio"
+      ],
       "note": "Plays four bell samples as the wind changes direction."
     },
     {
@@ -182,7 +230,9 @@
       "credit": "Melissa Wiederrecht",
       "path": "day19/index.html",
       "source": "day19/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day20",
@@ -191,7 +241,11 @@
       "credit": "Melissa Wiederrecht",
       "path": "day20/index.html",
       "source": "day20/sketch.js",
-      "tags": ["p5.js", "p5.easycam", "WEBGL"],
+      "tags": [
+        "p5.js",
+        "p5.easycam",
+        "WEBGL"
+      ],
       "note": "Three-dimensional; drag to orbit the camera."
     },
     {
@@ -201,7 +255,9 @@
       "credit": "Darien Brito",
       "path": "day21/index.html",
       "source": "day21/sketch.js",
-      "tags": ["p5.js"],
+      "tags": [
+        "p5.js"
+      ],
       "note": "Hand-written collision resolution, no physics library."
     },
     {
@@ -211,7 +267,9 @@
       "credit": "Melissa Wiederrecht",
       "path": "day22/index.html",
       "source": "day22/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day23-deepseek",
@@ -221,7 +279,9 @@
       "credit": "Melissa Wiederrecht, Roni Kaufman",
       "path": "day23/version deepseek/index.html",
       "source": "day23/version deepseek/sketch.js",
-      "tags": ["p5.js"],
+      "tags": [
+        "p5.js"
+      ],
       "note": "Version produced with DeepSeek."
     },
     {
@@ -232,8 +292,25 @@
       "credit": "Melissa Wiederrecht, Roni Kaufman",
       "path": "day23/version gpt/index.html",
       "source": "day23/version gpt/sketch.js",
-      "tags": ["p5.js"],
+      "tags": [
+        "p5.js"
+      ],
       "note": "Version produced with GPT."
+    },
+    {
+      "slug": "day23-google",
+      "day": 23,
+      "variant": "google",
+      "prompt": "Inspired by brutalism.",
+      "credit": "Melissa Wiederrecht, Roni Kaufman",
+      "path": "day23/version google/index.html",
+      "source": "day23/version google/sketch.js",
+      "tags": [
+        "p5.js",
+        "DeepSeek API",
+        "backend"
+      ],
+      "note": "Version produced with Gemini. The phrase comes from a local DeepSeek proxy: run the server in day23/version google/server, otherwise it shows a built-in quote."
     },
     {
       "slug": "day24-ds",
@@ -243,7 +320,10 @@
       "credit": "Bruce Holmer",
       "path": "day24/DS/index.html",
       "source": "day24/DS/sketch.js",
-      "tags": ["p5.js", "p5.sound"],
+      "tags": [
+        "p5.js",
+        "p5.sound"
+      ],
       "note": "Version produced with DeepSeek."
     },
     {
@@ -254,7 +334,9 @@
       "credit": "Bruce Holmer",
       "path": "day24/google/index.html",
       "source": "day24/google/sketch.js",
-      "tags": ["p5.js"],
+      "tags": [
+        "p5.js"
+      ],
       "note": "Version produced with Gemini. Static, no backend needed."
     },
     {
@@ -265,7 +347,9 @@
       "credit": "Bruce Holmer",
       "path": "day24/GPT/index.html",
       "source": "day24/GPT/sketch.js",
-      "tags": ["p5.js"],
+      "tags": [
+        "p5.js"
+      ],
       "note": "Version produced with GPT."
     },
     {
@@ -275,7 +359,9 @@
       "credit": "Bruce Holmer, Chris Barber (code_rgb), Heeey, Monokai",
       "path": "day25/index.html",
       "source": "day25/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     },
     {
       "slug": "day26",
@@ -284,7 +370,11 @@
       "credit": "Melissa Wiederrecht",
       "path": "day26/index.html",
       "source": "day26/sketch.js",
-      "tags": ["p5.js", "p5.sound", "interactive"],
+      "tags": [
+        "p5.js",
+        "p5.sound",
+        "interactive"
+      ],
       "note": "Draw with the mouse; keys 2-9 set the symmetry segments."
     },
     {
@@ -294,7 +384,9 @@
       "credit": "Melissa Wiederrecht",
       "path": "day27/index.html",
       "source": "day27/sketch.js",
-      "tags": ["p5.js"]
+      "tags": [
+        "p5.js"
+      ]
     }
   ]
 }

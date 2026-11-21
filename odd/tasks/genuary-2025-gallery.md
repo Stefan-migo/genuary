@@ -99,3 +99,43 @@ L5 (decisiones de captura, tomadas por evidencia de ejecución):
   JPEG, sin diferencia visible a tamaño de card.
 - `object-fit: contain` en las cards: las relaciones de aspecto son dispares (1:1, 4:3,
   16:10) y `cover` recortaba arte.
+
+L6 (cambio de requerimiento): el humano pregunta cuál era el proyecto que necesitaba una API
+y ofrece una key de DeepSeek. Se cambia el proveedor del backend de `day23/version google`:
+Gemini (`@google/generative-ai`) → DeepSeek vía `fetch` (API compatible OpenAI), sin SDK y sin
+dependencia nueva. El contrato `POST /api/generate-phrase → { phrase }` y el puerto 3000 se
+mantienen porque `day23/version google/sketch.js` los tiene hardcodeados. Se agrega CORS
+porque el sketch se sirve desde otro puerto (la galería) y el POST JSON dispara preflight.
+S5 queda: el servidor usa `DEEPSEEK_API_KEY` desde un `.env` no versionado; la key nunca vive
+en el browser.
+
+Verificado con `curl` y con render headless: preflight `204` con headers CORS, `POST` sin key
+responde `503` JSON, y el sketch cae a su quote interno marcado `(AI unavailable)`.
+
+L7 (decisión del humano): "Sí, listarlo con nota de backend". `day23/version google` vuelve a
+la galería: nueva entrada `day23-google` en `gallery/projects.json` con thumbnail propio y nota
+que explica la dependencia del proxy. S5 deja de excluirlo del sitio; el backend sigue sin
+versionar su `.env`.
+
+L8 (deploy): el humano elige "Todo junto: galería + API en un proyecto" en Vercel. Se reemplaza
+el backend express por una función serverless con la misma lógica:
+
+- `lib/deepseek.js` (CommonJS) es el único lugar que llama al proveedor; lo usan la función y el
+  server local.
+- `api/generate-phrase.js` es un Web Handler (`Request` → `Response`): OPTIONS 204, 405 para
+  otros métodos, 200 `{phrase}`, y el status del `PhraseError` (503 sin key, 502 proveedor).
+  No reenvía el body del proveedor al browser (puede mencionar la key o la cuota); lo loguea.
+- `tools/lib/static-server.mjs` acepta `{ routes, port }` y despacha un `Request` web al
+  handler, así lo local y lo deployado corren el mismo código. Cualquier método sobre una ruta
+  registrada llega al handler (paridad con Vercel), no solo el método exacto.
+- `tools/serve.mjs` es el único comando de desarrollo: galería + `/api` en un origen, cero
+  dependencias, y lee `.env` de la raíz.
+- `day23/version google/sketch.js` pasa a URL relativa `/api/generate-phrase`, así funciona
+  igual detrás de Vercel o del server local.
+- `day23/version google/server/` queda como runner local legacy (express + `public/`), ya no
+  es el camino de deploy.
+
+Verificado: GET 405 / POST 503 sin key / OPTIONS 204 en local; con stub de proveedor, POST 200
+`{"phrase":"Concrete remembers every hand that poured it."}` y render headless del sketch con
+la frase dibujada; proveedor 500 → proxy 502 sin filtrar el body; `check-gallery` 346/346 y
+`capture-thumbnails day3` sigue funcionando.
