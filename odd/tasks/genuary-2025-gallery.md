@@ -139,3 +139,12 @@ Verificado: GET 405 / POST 503 sin key / OPTIONS 204 en local; con stub de prove
 `{"phrase":"Concrete remembers every hand that poured it."}` y render headless del sketch con
 la frase dibujada; proveedor 500 → proxy 502 sin filtrar el body; `check-gallery` 346/346 y
 `capture-thumbnails day3` sigue funcionando.
+
+L9 (deploy real y su bug): el push a `main` (`fd94196..74d6f98`) publicó la galería, pero
+`POST /api/generate-phrase` en Vercel colgaba hasta el timeout con 0 bytes. Causa: en un
+proyecto sin framework, Vercel invoca los archivos de `api/` en estilo Node
+`handler(req, res)`, y el handler devolvía un `Response` Web que nadie enviaba, dejando la
+conexión abierta. El server local sí usa el contrato Web, así que la verificación previa no
+podía detectarlo. Ahora `api/generate-phrase.js` acepta ambas firmas (detecta `Request` por la
+presencia de `json()`) y `tools/check-api.mjs` ejercita las dos contra un proveedor stub, sin
+red, incluyendo que un 500 del proveedor se convierta en 502 sin filtrar su body.
