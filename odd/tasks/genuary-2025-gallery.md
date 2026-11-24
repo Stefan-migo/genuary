@@ -295,3 +295,16 @@ Diagnósticos que costaron y conviene no repetir:
 Medido (5 muestras tras la formación): 1280x800 → 24-31 fps, 1241 partículas, 2690 puntos de
 máscara; 390x844 → 27-47 fps, 1840 partículas, 1186 puntos. `check-mobile` 1/1,
 `check-gallery` 346/346, `check-api` 20/20.
+
+L16 (día 4): el humano pide sacar el botón "Configure" y que el panel aparezca sólo con una tecla.
+Se elimina el botón del DOM y su CSS; queda `C` (y `Esc` para cerrar).
+
+Consecuencia detectada y resuelta: en un teléfono no hay tecla, así que el panel habría quedado
+inalcanzable. Se agrega un **mantener presionado** (550 ms, `pointerdown`/`pointerup`) que no
+dibuja nada en pantalla: el requisito de "completamente hidden" se mantiene y el acceso táctil
+también. La pista dentro del panel lo menciona.
+
+También se quita el `capture` de la entrada `day4` en `projects.json`: apuntaba a `.toggle`, que
+ya no existe, y la captura del thumbnail habría lanzado excepción. Verificado: 0 botones fuera
+del panel, panel oculto por defecto, abre con `C` y con mantener presionado; thumbnail limpio;
+`check-mobile` 1/1, `check-gallery` 346/346, `check-api` 20/20.

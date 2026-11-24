@@ -54,8 +54,7 @@
         "p5.js",
         "images"
       ],
-      "note": "Full viewport and configurable: press C to load your own two photographs and the line the glitch reveals.",
-      "capture": "document.querySelector('.toggle').style.display = 'none'"
+      "note": "Full viewport and configurable: press C to load your own two photographs and the line the glitch reveals."
     },
     {
       "slug": "day5",

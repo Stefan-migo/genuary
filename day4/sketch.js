@@ -431,14 +431,14 @@ function bindRange(id, outputId, initial, apply, label) {
 
 function wirePanel() {
 	const panel = document.getElementById('panel');
-	const toggle = document.getElementById('toggle');
 
+	// No visible control: the panel belongs to the piece, not to the picture. It
+	// opens with C, and on a touch screen with a long press, since there is no
+	// keyboard there.
 	const setOpen = (open) => {
 		panel.hidden = !open;
-		toggle.setAttribute('aria-expanded', String(open));
 	};
 
-	toggle.addEventListener('click', () => setOpen(panel.hidden));
 	document.getElementById('close').addEventListener('click', () => setOpen(false));
 
 	window.addEventListener('keydown', (event) => {
@@ -448,6 +448,20 @@ function wirePanel() {
 		if (event.key === 'c' || event.key === 'C') setOpen(panel.hidden);
 		if (event.key === 'Escape') setOpen(false);
 	});
+
+	let pressTimer = null;
+	const startPress = () => {
+		clearTimeout(pressTimer);
+		pressTimer = setTimeout(() => setOpen(panel.hidden), 550);
+	};
+	const cancelPress = () => clearTimeout(pressTimer);
+
+	for (const type of ['pointerdown']) {
+		window.addEventListener(type, startPress, { passive: true });
+	}
+	for (const type of ['pointerup', 'pointercancel', 'pointermove']) {
+		window.addEventListener(type, cancelPress, { passive: true });
+	}
 
 	for (const [index, id] of [[0, 'imageA'], [1, 'imageB']]) {
 		document.getElementById(id).addEventListener('change', (event) => {
