@@ -263,3 +263,35 @@ sólo de frente, (b) formación más lenta, (c) más puntos y más profundidad e
 
 Verificado por render: de frente la frase es sólida y legible; orbitada se deshace en nube; la
 máscara muestra volumen. `check-mobile` 1/1, `check-gallery` 346/346.
+
+L15 (cuarta vuelta del día 5, foco móvil): el humano pide menos zoom en móvil (máscara y texto
+encimados), que la máscara también sea nube de puntos legible sólo de frente, y que el texto
+entre en **dos líneas**.
+
+- **Dos líneas por diseño**: `splitLines` elige el corte balanceado midiendo a un tamaño de
+  referencia (los anchos escalan lineal, así que el corte óptimo no depende del cuerpo), y el
+  cuerpo sale de `min(ancho, alto)` medidos. Si el texto es tan largo que el cuerpo quedaría
+  ilegible, cae al wrap de siempre. Raster 720x300 en escritorio y 480x300 en móvil.
+- **Móvil: carriles separados** (`LAYOUT.faceY = -0.15h`, `LAYOUT.textY = +0.23h`), máscara al
+  74% del ancho y píxeles del texto más finos (step 2). Sin separación las dos capas se comían.
+- **La máscara también es nube**: profundidad = cúpula (campo de distancia) + término aleatorio
+  estable por celda, y se dibuja como quads (un solo `beginShape`), lo que además abarató 3× y
+  permitió subir a 3200 celdas objetivo en escritorio.
+- **Sin tilt constante**: el `rotateX(15)`/`rotateY` sobre el grupo convertía la profundidad en
+  desplazamiento de pantalla (`y' = y cos − z sin`), o sea la nube se auto-orbitaba. Ahora ambas
+  capas son frontales y sólo la órbita del usuario las deshace.
+
+Diagnósticos que costaron y conviene no repetir:
+
+- El "doble trazo" del texto **no era la proyección**: con `z=0` el texto salía perfecto. La
+  causa real era que la nube de la máscara llegaba a z=+33, **delante del texto**, y tapaba
+  trazos. Se separan los planos: máscara a −0.68·span (toda detrás), texto a +60.
+- `ortho()` **tiene que ir después de `orbitControl()`** y con límites explícitos
+  (`−4000..4000`): el frustum por defecto recortaba la máscara al empujarla atrás. El orden
+  `bottom/top` importa: `ortho(-w/2, w/2, -h/2, h/2, ...)`; al revés la escena sale reflejada.
+- Muestrear **promedio por bloque** (no un píxel por celda) al construir la grilla de la cara:
+  con un solo píxel la máscara se aliaseaba en huecos.
+
+Medido (5 muestras tras la formación): 1280x800 → 24-31 fps, 1241 partículas, 2690 puntos de
+máscara; 390x844 → 27-47 fps, 1840 partículas, 1186 puntos. `check-mobile` 1/1,
+`check-gallery` 346/346, `check-api` 20/20.
