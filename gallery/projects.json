@@ -70,7 +70,7 @@
         "images",
         "interactive"
       ],
-      "note": "Two layers: the anonymous mask from mask.jpg rebuilt as an isometric pixel relief, and a swarm that starts scattered and assembles into a pixel-font phrase (press C to change it).",
+      "note": "Two layers: the anonymous mask rebuilt as a pixel relief with real volume, and a 3D cloud of points that assembles the phrase — readable head-on, dissolved once you drag the camera (press C to change the text).",
       "capture": "document.querySelector('.toggle').style.display = 'none'"
     },
     {
