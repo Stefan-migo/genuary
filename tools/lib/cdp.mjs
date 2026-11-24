@@ -154,8 +154,16 @@ export async function launchChrome({ width = 1200, height = 750 } = {}) {
 			await send('Page.navigate', { url: pageUrl }, sessionId);
 			await loaded.catch(() => undefined);
 
+			let actValue;
+			let actError;
 			if (act) {
-				await send('Runtime.evaluate', { expression: act, awaitPromise: true }, sessionId);
+				const outcome = await send('Runtime.evaluate', {
+					expression: act,
+					awaitPromise: true,
+					returnByValue: true,
+				}, sessionId);
+				actValue = outcome.result?.value;
+				if (outcome.exceptionDetails) actError = outcome.exceptionDetails.text;
 			}
 
 			await sleep(settleMs);
@@ -166,7 +174,10 @@ export async function launchChrome({ width = 1200, height = 750 } = {}) {
 			if (quality !== undefined) shot.quality = quality;
 			if (clip) shot.clip = clip;
 			const { data } = await send('Page.captureScreenshot', shot, sessionId);
-			return Buffer.from(data, 'base64');
+			const png = Buffer.from(data, 'base64');
+			png.actValue = actValue;
+			png.actError = actError;
+			return png;
 		} finally {
 			await send('Target.closeTarget', { targetId }).catch(() => undefined);
 		}

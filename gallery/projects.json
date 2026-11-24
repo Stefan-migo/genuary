@@ -54,7 +54,8 @@
         "p5.js",
         "images"
       ],
-      "note": "Uses the bundled source photographs as luminance masks."
+      "note": "Full viewport and configurable: press C to load your own two photographs and the line the glitch reveals.",
+      "capture": "document.querySelector('.toggle').style.display = 'none'"
     },
     {
       "slug": "day5",

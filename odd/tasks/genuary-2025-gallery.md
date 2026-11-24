@@ -148,3 +148,25 @@ conexión abierta. El server local sí usa el contrato Web, así que la verifica
 podía detectarlo. Ahora `api/generate-phrase.js` acepta ambas firmas (detecta `Request` por la
 presencia de `json()`) y `tools/check-api.mjs` ejercita las dos contra un proveedor stub, sin
 red, incluyendo que un 500 del proveedor se convierta en 502 sin filtrar su body.
+
+L10 (mejora de piezas, una por una): el humano define el sentido del repo — codificar piezas,
+seleccionar las que funcionan y llevarlas a obra. Empieza por el día 4 ("Black on black").
+Decisiones suyas: el texto se **revela en el glitch** junto a las imágenes; la configuración va
+en un **panel ocultable**.
+
+- Canvas a viewport completo (`windowWidth/windowHeight` + `windowResized`), `pixelDensity(1)`
+  porque el glitch recorre el buffer de píxeles cada reveal.
+- Densidad derivada del área (boids, tinta, grilla del Game of Life: 98 celdas en 390x844,
+  180 en 1280x800), y doble buffer en la grilla para no asignar 32k celdas por frame.
+- Imágenes en `cover`, no estiradas.
+- El texto se dibuja con `blendMode(DIFFERENCE)`: blanco sobre blanco no se leía en la
+  imagen real del repo; restar garantiza contraste y además lee como quemado en el frame.
+- Panel ocultable (`C` / botón / Esc) con: dos slots de imagen, textarea del texto, tasa de
+  glitch y densidad. Persiste en `localStorage`.
+- `gallery/projects.json` acepta un `capture` opcional por entrada: una expresión que corre en
+  la página antes de la captura, para esconder UI o forzar un frame. Se usa en day4 para
+  ocultar el botón.
+
+Verificado con render headless: 390x844 y 1280x800 llenan el viewport sin bandas, panel en
+bottom sheet (12,465,366,367 dentro de 844), texto legible sobre la imagen clara, `check-gallery`
+346/346 y `check-api` 20/20.

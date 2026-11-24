@@ -98,6 +98,9 @@ control.
 1. Create `dayNN/` with `index.html` and `sketch.js` (copy the shape of a neighbouring day).
 2. Add an entry to `gallery/projects.json` with a unique `slug`, the `day`, the official
    `prompt`, the `credit`, `path`, `source`, and optional `tags`/`note`/`variant`.
+   If the piece needs interaction to look like anything, or its controls sit over the
+   canvas, add an optional `capture` expression: it runs in the page before the thumbnail
+   is taken (a sketch can use it to hide UI or trigger its own frame).
 3. Run `node tools/capture-thumbnails.mjs dayNN` and then `node tools/check-gallery.mjs`.
 
 ## Notes on the collection

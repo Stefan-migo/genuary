@@ -1,14 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="utf-8">
-	<title>day 4</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="theme-color" content="#000000">
+	<title>Genuary 4 — Black on black</title>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 
+	<style>
+		html,
+		body {
+			margin: 0;
+			height: 100%;
+			background: #000;
+			overflow: hidden;
+			overscroll-behavior: none;
+			-webkit-text-size-adjust: 100%;
+		}
+
+		canvas {
+			display: block;
+		}
+
+		.ui {
+			font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+			font-size: 13px;
+			color: #e8e8ec;
+		}
+
+		.toggle {
+			position: fixed;
+			top: max(12px, env(safe-area-inset-top));
+			right: max(12px, env(safe-area-inset-right));
+			z-index: 20;
+			padding: 7px 12px;
+			border: 1px solid #2a2a30;
+			border-radius: 8px;
+			background: #0c0c0fcc;
+			color: #9a9aa6;
+			font: inherit;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			font-size: 10px;
+			cursor: pointer;
+			backdrop-filter: blur(8px);
+			opacity: 0.55;
+			transition: opacity 140ms ease, color 140ms ease;
+		}
+
+		.toggle:hover,
+		.toggle:focus-visible {
+			opacity: 1;
+			color: #e8e8ec;
+		}
+
+		.panel {
+			position: fixed;
+			top: max(12px, env(safe-area-inset-top));
+			right: max(12px, env(safe-area-inset-right));
+			z-index: 21;
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			width: min(320px, calc(100vw - 24px));
+			max-height: min(82vh, 640px);
+			padding: 16px;
+			border: 1px solid #2a2a30;
+			border-radius: 12px;
+			background: #0b0b0ee6;
+			backdrop-filter: blur(14px);
+			overflow-y: auto;
+		}
+
+		.panel[hidden] {
+			display: none;
+		}
+
+		.panel header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+		}
+
+		.panel h2 {
+			margin: 0;
+			font-size: 11px;
+			font-weight: 500;
+			letter-spacing: 0.14em;
+			text-transform: uppercase;
+			color: #7ef0c0;
+		}
+
+		.panel label {
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+			font-size: 10px;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			color: #8b8b98;
+		}
+
+		.panel input[type="file"] {
+			font-size: 11px;
+			text-transform: none;
+			letter-spacing: 0;
+			color: #e8e8ec;
+		}
+
+		.panel textarea {
+			min-height: 62px;
+			padding: 8px;
+			border: 1px solid #2a2a30;
+			border-radius: 8px;
+			background: #131317;
+			color: #e8e8ec;
+			font: inherit;
+			font-size: 12px;
+			letter-spacing: 0;
+			text-transform: none;
+			resize: vertical;
+		}
+
+		.panel .row {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.panel input[type="range"] {
+			flex: 1;
+			accent-color: #7ef0c0;
+		}
+
+		.panel output {
+			min-width: 4ch;
+			text-align: right;
+			color: #e8e8ec;
+			letter-spacing: 0;
+		}
+
+		.panel .close {
+			padding: 2px 7px;
+			border: 1px solid #2a2a30;
+			border-radius: 6px;
+			background: none;
+			color: #9a9aa6;
+			font: inherit;
+			font-size: 14px;
+			line-height: 1;
+			cursor: pointer;
+		}
+
+		.panel .hint {
+			margin: 0;
+			font-size: 10px;
+			color: #6c6c78;
+		}
+
+		kbd {
+			padding: 1px 5px;
+			border: 1px solid #2a2a30;
+			border-radius: 4px;
+			background: #16161b;
+			color: #c9c9d4;
+		}
+
+		@media (max-width: 600px) {
+			.panel {
+				left: 12px;
+				right: 12px;
+				bottom: max(12px, env(safe-area-inset-bottom));
+				top: auto;
+				width: auto;
+				max-height: 68vh;
+			}
+		}
+	</style>
 </head>
 
-<body>
+<body class="ui">
+	<button class="toggle" id="toggle" type="button" aria-controls="panel" aria-expanded="false">
+		Configure
+	</button>
+
+	<aside class="panel" id="panel" aria-label="Sketch settings" hidden>
+		<header>
+			<h2>Black on black</h2>
+			<button class="close" id="close" type="button" aria-label="Close settings">&times;</button>
+		</header>
+
+		<label>
+			Image A
+			<input type="file" id="imageA" accept="image/*">
+		</label>
+
+		<label>
+			Image B
+			<input type="file" id="imageB" accept="image/*">
+		</label>
+
+		<label>
+			Text shown in the glitch
+			<textarea id="textInput" rows="3" maxlength="220"
+				placeholder="Type what the flash should reveal"></textarea>
+		</label>
+
+		<label>
+			<div class="row">
+				<span>Glitch rate</span>
+				<input type="range" id="chance" min="2" max="60" step="1">
+				<output id="chanceOut" for="chance"></output>
+			</div>
+		</label>
+
+		<label>
+			<div class="row">
+				<span>Density</span>
+				<input type="range" id="density" min="40" max="200" step="5">
+				<output id="densityOut" for="density"></output>
+			</div>
+		</label>
+
+		<p class="hint">Press <kbd>C</kbd> to open or close this panel. Settings stay in this browser.</p>
+	</aside>
+
 	<script src="sketch.js"></script>
 </body>
 
