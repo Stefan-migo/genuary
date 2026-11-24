@@ -67,7 +67,9 @@
       "tags": [
         "p5.js",
         "images"
-      ]
+      ],
+      "note": "Rebuilt away from the isometric prompt: scattered specks assemble into a pixel-font phrase (press C to change it, default \"las balas que nos tiraron van a volver\").",
+      "capture": "document.querySelector('.toggle').style.display = 'none'"
     },
     {
       "slug": "day5-v2",

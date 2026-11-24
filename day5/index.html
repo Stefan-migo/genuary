@@ -1,16 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 	<meta charset="utf-8">
 	<link rel="stylesheet" href="../shared/mobile.css">
-	<title>day 5</title>
+	<meta name="theme-color" content="#0c0c10">
+	<title>day 5 — las balas que nos tiraron van a volver</title>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 
+	<style>
+		html,
+		body {
+			height: 100%;
+			background: #0c0c10;
+			overflow: hidden;
+		}
+
+		.ui {
+			font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+			font-size: 13px;
+			color: #e8e8ec;
+		}
+
+		.toggle {
+			position: fixed;
+			top: max(12px, env(safe-area-inset-top));
+			right: max(12px, env(safe-area-inset-right));
+			z-index: 20;
+			padding: 7px 12px;
+			border: 1px solid #26262e;
+			border-radius: 8px;
+			background: #0c0c10cc;
+			color: #9a9aa6;
+			font: inherit;
+			font-size: 10px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			cursor: pointer;
+			backdrop-filter: blur(8px);
+			opacity: 0.55;
+			transition: opacity 140ms ease, color 140ms ease;
+		}
+
+		.toggle:hover,
+		.toggle:focus-visible {
+			opacity: 1;
+			color: #e8e8ec;
+		}
+
+		.panel {
+			position: fixed;
+			top: max(12px, env(safe-area-inset-top));
+			right: max(12px, env(safe-area-inset-right));
+			z-index: 21;
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			width: min(330px, calc(100vw - 24px));
+			max-height: min(82vh, 640px);
+			padding: 16px;
+			border: 1px solid #26262e;
+			border-radius: 12px;
+			background: #0b0b0ee6;
+			backdrop-filter: blur(14px);
+			overflow-y: auto;
+		}
+
+		.panel[hidden] {
+			display: none;
+		}
+
+		.panel header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+		}
+
+		.panel h2 {
+			margin: 0;
+			font-size: 11px;
+			font-weight: 500;
+			letter-spacing: 0.14em;
+			text-transform: uppercase;
+			color: #7ec8f0;
+		}
+
+		.panel label {
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+			font-size: 10px;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			color: #8b8b98;
+		}
+
+		.panel textarea {
+			min-height: 76px;
+			padding: 8px;
+			border: 1px solid #26262e;
+			border-radius: 8px;
+			background: #131317;
+			color: #e8e8ec;
+			font: inherit;
+			font-size: 13px;
+			letter-spacing: 0;
+			text-transform: none;
+			resize: vertical;
+		}
+
+		.panel .row {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.panel input[type="range"] {
+			flex: 1;
+			accent-color: #7ec8f0;
+		}
+
+		.panel output {
+			min-width: 4ch;
+			text-align: right;
+			color: #e8e8ec;
+			letter-spacing: 0;
+		}
+
+		.panel .actions {
+			display: flex;
+			gap: 8px;
+		}
+
+		.panel button.action {
+			flex: 1;
+			padding: 8px 10px;
+			border: 1px solid #2f4a5c;
+			border-radius: 8px;
+			background: #12222c;
+			color: #b9e2f7;
+			font: inherit;
+			font-size: 11px;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			cursor: pointer;
+		}
+
+		.panel button.action:hover {
+			background: #17303e;
+		}
+
+		.panel .close {
+			padding: 2px 7px;
+			border: 1px solid #26262e;
+			border-radius: 6px;
+			background: none;
+			color: #9a9aa6;
+			font: inherit;
+			font-size: 14px;
+			line-height: 1;
+			cursor: pointer;
+		}
+
+		.panel .hint {
+			margin: 0;
+			font-size: 10px;
+			line-height: 1.5;
+			color: #6c6c78;
+		}
+
+		.panel .count {
+			margin: 0;
+			font-size: 10px;
+			color: #6c6c78;
+		}
+
+		kbd {
+			padding: 1px 5px;
+			border: 1px solid #26262e;
+			border-radius: 4px;
+			background: #16161b;
+			color: #c9c9d4;
+		}
+
+		@media (max-width: 600px) {
+			.panel {
+				left: 12px;
+				right: 12px;
+				bottom: max(12px, env(safe-area-inset-bottom));
+				top: auto;
+				width: auto;
+				max-height: 62vh;
+			}
+		}
+	</style>
 </head>
 
-<body>
+<body class="ui">
+	<button class="toggle" id="toggle" type="button" aria-controls="panel" aria-expanded="false">
+		Text
+	</button>
+
+	<aside class="panel" id="panel" aria-label="Sketch settings" hidden>
+		<header>
+			<h2>The phrase</h2>
+			<button class="close" id="close" type="button" aria-label="Close settings">&times;</button>
+		</header>
+
+		<label>
+			What the pixels assemble into
+			<textarea id="textInput" rows="3" maxlength="180" spellcheck="false"></textarea>
+		</label>
+
+		<label>
+			<div class="row">
+				<span>Pixel size</span>
+				<input type="range" id="pixelSize" min="2" max="7" step="1">
+				<output id="pixelOut" for="pixelSize"></output>
+			</div>
+		</label>
+
+		<div class="actions">
+			<button class="action" id="reform" type="button">Reform again</button>
+		</div>
+
+		<p class="count" id="count"></p>
+		<p class="hint">Press <kbd>C</kbd> for this panel, <kbd>R</kbd> to scatter and reform. Kept in this browser.</p>
+	</aside>
+
 	<script src="sketch.js"></script>
 </body>
 

@@ -192,3 +192,27 @@ desborde horizontal, canvas dentro del viewport — y se arregla todo lo que fal
   ser opt-in (`clipToCanvas`), porque para revisar layout hace falta el viewport completo.
 
 Resultado: **31/31** entran en 390x844. `check-gallery` 346/346, `check-api` 20/20.
+
+L12 (segunda pieza, día 5): pedido del humano — las partículas que arrancan dispersas y
+terminan alineadas deben terminar formando una frase en pixel font, configurable, con
+"las balas que nos tiraron van a volver" como default.
+
+- La frase se rasteriza una vez en un `createGraphics` offscreen, se ajusta el cuerpo de texto
+  por búsqueda hasta que entra envuelto, y se leen los píxeles para obtener celdas destino.
+  Una celda cuenta como tinta si algún píxel de su bloque supera el umbral, así los trazos
+  finos no desaparecen con píxeles grandes.
+- Cada partícula tiene su celda: arranca fuera de cuadro con ruido, y un resorte que se vuelve
+  más rígido cerca del destino la lleva a su lugar. `SCATTER_HOLD = 1.5s` de caos libre antes
+  de que empiece la ola de izquierda a derecha con delays aleatorios.
+- Color: cálido cuando está dispersa, azul cuando asentada (`lerpColor` por el ease propio).
+- Se abandona WEBGL/isométrico: un texto legible no sobrevive al tilt de 15° con rotación
+  oscilante, y miles de `box()` por frame no es una carga de teléfono. Los glitches pasan a
+  ser franjas 2D.
+- El raster sigue la orientación del viewport (360x620 en vertical, 560x320 en horizontal):
+  con raster horizontal el texto quedaba como una banda fina en el medio del teléfono.
+- Panel ocultable (C, R para reformar) con el texto y el tamaño de píxel; tope de 4200
+  partículas, y si la frase es larga el píxel crece solo (se informa en el panel).
+
+Medido: 1675 partículas en 1280x800 (celda 8.4px), 2147 en 390x844 (celda 3.9px).
+`check-mobile` day5 1/1, `check-gallery` 346/346, `check-api` 20/20. Thumbnail recapturado
+(la frase formada, sin UI).
