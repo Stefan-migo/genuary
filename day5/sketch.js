@@ -23,6 +23,9 @@ const FORM_SECONDS = 6.5;
 const TEXT_DEPTH = 120;
 
 const RASTER_MARGIN = 14;
+
+// Below this raster font size, two lines stop being legible and we wrap instead.
+const MIN_TWO_LINE_SIZE = 26;
 const DEFAULT_TEXT = 'las balas que nos tiraron van a volver';
 
 // A landscape raster on a portrait phone would leave the phrase as a thin band
@@ -38,7 +41,8 @@ const STATE = {
 
 let faceImg;
 let faceGrid = [];
-let faceHeight = [];
+let faceDome = [];
+let faceScatter = [];
 let faceCell = 16;
 let faceSizeW = 0;
 let faceSizeH = 0;
@@ -51,37 +55,10 @@ let reformAt = 0;
 let warm;
 let cool;
 
-// front, top and right of every pixel-cube, each with its own shade. Drawn every
-// frame from the same camera side, which is enough for the +/-8 degree sway.
-const FACES = [
-	{
-		fill: [12, 120, 255, 128],
-		draw: (x, y, z, h, d) => {
-			vertex(x - h, y - h, z + d);
-			vertex(x + h, y - h, z + d);
-			vertex(x + h, y + h, z + d);
-			vertex(x - h, y + h, z + d);
-		},
-	},
-	{
-		fill: [10, 92, 210, 104],
-		draw: (x, y, z, h, d) => {
-			vertex(x - h, y - h, z + d);
-			vertex(x + h, y - h, z + d);
-			vertex(x + h, y - h, z - d);
-			vertex(x - h, y - h, z - d);
-		},
-	},
-	{
-		fill: [6, 64, 170, 96],
-		draw: (x, y, z, h, d) => {
-			vertex(x + h, y - h, z + d);
-			vertex(x + h, y + h, z + d);
-			vertex(x + h, y + h, z - d);
-			vertex(x + h, y - h, z - d);
-		},
-	},
-];
+// On a phone the two layers cannot share the middle of the screen: the mask sits
+// above and the phrase below, so both can be seen at once.
+const LAYOUT = { faceY: 0, textY: 0 };
+
 
 function preload() {
 	faceImg = loadImage('mask.jpg');
@@ -100,8 +77,11 @@ function setup() {
 	cool = color(168, 226, 255);
 
 	configureRaster();
+	configureLayout();
 	buildFaceGrid();
 	loadSettings();
+	// A small glyph needs finer pixels to keep its strokes readable.
+	if (Math.min(width, height) < 600) STATE.pixelSize = Math.min(STATE.pixelSize, 2);
 	rebuild();
 	wirePanel();
 }
@@ -109,36 +89,53 @@ function setup() {
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	configureRaster();
+	configureLayout();
 	buildFaceGrid();
 	rebuild();
 }
 
+function configureLayout() {
+	const compact = Math.min(width, height) < 600;
+	LAYOUT.faceY = compact ? -height * 0.15 : 0;
+	LAYOUT.textY = compact ? height * 0.23 : 0;
+}
+
 function configureRaster() {
-	const portrait = height > width * 1.05;
-	rasterW = portrait ? 360 : 560;
-	rasterH = portrait ? 620 : 320;
+	// Wide and short: the phrase is laid out as two lines, so the raster mirrors
+	// that shape instead of a portrait column.
+	const compact = Math.min(width, height) < 600;
+	rasterW = compact ? 480 : 720;
+	rasterH = 300;
 }
 
 function draw() {
 	background(35);
 
-	// Orthographic on purpose: under perspective, a pixel at depth z lands off
-	// its cell (that is what f / (f - z) means), so the phrase would shred. With
-	// no perspective, depth costs nothing in screen position: the phrase reads
-	// head-on and still falls apart the moment you orbit the scene.
-	ortho();
-
 	const elapsed = (millis() - formationStart) / 1000;
 
 	orbitControl();
 
-	// --- layer 1: the face, in its own tilted space
-	push();
-	rotateX(15);
-	rotateY(sin(frameCount * 0.6) * 8);
-	// Pushed back: the phrase, not the relief, owns the camera reference plane.
+	// Orthographic on purpose: under perspective, a pixel at depth z lands off
+	// its cell (that is what f / (f - z) means), so the phrase shreds. With no
+	// perspective, depth costs nothing in screen position: the phrase reads
+	// head-on and falls apart only when the scene is orbited.
+	//
+	// This has to come after orbitControl(). Explicit far bounds matter: p5's
+	// default ortho frustum stops around twice the canvas size, which clipped the
+	// mask once it was pushed back to sit behind the phrase.
+	ortho(-width / 2, width / 2, -height / 2, height / 2, -4000, 4000);
+
+	// --- layer 1: the face as a cloud of points
+	//
+	// No constant tilt or sway: rotating the group turns every point's z into a
+	// screen offset (y' = y cos - z sin) and the cloud scrambles itself. Frontal,
+	// both layers resolve; the user's orbit is what dissolves them.
 	const span = Math.min(width, height);
-	translate(0, 0, -span * 0.42 + sin(frameCount * 0.8) * span * 0.04);
+	push();
+	// Far enough back that the whole cloud stays behind the phrase plane: the
+	// relief reaches forward by relief + scatter, and a mask point in front of the
+	// text eats the strokes of the letters.
+	translate(0, LAYOUT.faceY, -span * 0.68);
 	drawFace();
 	pop();
 
@@ -147,9 +144,11 @@ function draw() {
 	// --- layer 2: the phrase, on a plane facing the camera
 	for (const particle of particles) particle.update(elapsed);
 
-	// Kept at z = 0, the plane the projection was measured on: moving it toward
-	// the camera scales the phrase up and pushes it out of frame.
+	// Nudged forward so the two clouds never share depths.
+	push();
+	translate(0, 0, 60);
 	drawParticles();
+	pop();
 }
 
 // --------------------------------------------------------------- the face
@@ -187,48 +186,63 @@ function faceBounds() {
 
 function buildFaceGrid() {
 	const compact = Math.min(width, height) < 600;
-
 	const bounds = faceBounds();
 	const aspect = bounds.w / bounds.h;
+	const fill = compact ? 0.74 : 0.86;
 
-	let faceW = Math.min(width * 0.92, height * 0.92 * aspect);
+	let faceW = Math.min(width * fill, height * fill * aspect);
 	let faceH = faceW / aspect;
-	if (faceH > height * 0.92) {
-		faceH = height * 0.92;
+	if (faceH > height * fill) {
+		faceH = height * fill;
 		faceW = faceH * aspect;
 	}
 	faceSizeW = faceW;
 	faceSizeH = faceH;
 
-	// Target a cell count rather than a cell size: a phone gets a coarser grid so
-	// the relief stays interactive, a desktop gets a denser one. This has to run
-	// after the face size is known, or it reads the previous resize.
-	const targetCells = compact ? 900 : 2400;
-	faceCell = constrain(Math.round(Math.sqrt((faceW * faceH) / targetCells)), compact ? 10 : 8, 30);
+	// Quads instead of cubes cost a third of the vertices, so the cloud can hold
+	// more points than the old relief did.
+	const targetCells = compact ? 1400 : 3200;
+	faceCell = constrain(Math.round(Math.sqrt((faceW * faceH) / targetCells)), compact ? 9 : 7, 30);
 
 	const cols = Math.max(1, Math.round(faceW / faceCell));
 	const rows = Math.max(1, Math.round(faceH / faceCell));
 
+	// Average every source pixel inside the cell. Sampling a single pixel per cell
+	// aliased the mask into holes at low resolutions.
 	faceGrid = [];
-
 	for (let i = 0; i < cols; i += 1) {
 		const row = [];
 		for (let j = 0; j < rows; j += 1) {
-			const imgX = Math.floor(map(i, 0, cols - 1, bounds.x, bounds.x + bounds.w - 1));
-			const imgY = Math.floor(map(j, 0, rows - 1, bounds.y, bounds.y + bounds.h - 1));
-			row.push(red(faceImg.get(imgX, imgY)));
+			const x0 = Math.floor(map(i, 0, cols, bounds.x, bounds.x + bounds.w));
+			const x1 = Math.floor(map(i + 1, 0, cols, bounds.x, bounds.x + bounds.w));
+			const y0 = Math.floor(map(j, 0, rows, bounds.y, bounds.y + bounds.h));
+			const y1 = Math.floor(map(j + 1, 0, rows, bounds.y, bounds.y + bounds.h));
+
+			let sum = 0;
+			let count = 0;
+			for (let y = y0; y < Math.max(y1, y0 + 1); y += 1) {
+				for (let x = x0; x < Math.max(x1, x0 + 1); x += 1) {
+					sum += red(faceImg.get(x, y));
+					count += 1;
+				}
+			}
+
+			row.push(count ? sum / count : 0);
 		}
 		faceGrid.push(row);
 	}
 
-	faceHeight = buildHeightField(faceGrid);
+	// Two depth sources per cell, both fixed until the next rebuild:
+	// the distance field gives the face its dome, the random term turns the
+	// relief into a cloud that only resolves head-on.
+	faceDome = buildHeightField(faceGrid);
+	faceScatter = faceGrid.map((row) => row.map(() => random(-1, 1)));
 }
 
 /**
  * mask.jpg is a flat graphic: white mask, black ground. Reading depth from
  * brightness gives a flat sheet, so the volume comes from a distance field —
- * blur the coverage a few times and the shape inflates towards its centre,
- * like a face pressing through the plane.
+ * blur the coverage a few times and the shape inflates towards its centre.
  */
 function buildHeightField(source) {
 	const cols = source.length;
@@ -256,7 +270,6 @@ function buildHeightField(source) {
 		field = next;
 	}
 
-	// Normalise: the blur leaves the centre below 1, and the rim above 0.
 	let peak = 0;
 	for (const row of field) for (const value of row) peak = Math.max(peak, value);
 	if (peak <= 0) return field;
@@ -268,32 +281,37 @@ function drawFace() {
 	const rows = faceGrid[0].length;
 	const stepX = faceSizeW / cols;
 	const stepY = faceSizeH / rows;
-	const half = Math.min(stepX, stepY) * 0.36;
-	// Deeper than wide, so the top and side faces actually read as volume.
-	const depth = half * 2.1;
-	const relief = Math.min(width, height) * 0.3;
+	const half = Math.min(stepX, stepY) * 0.5;
+	const span = Math.min(width, height);
+	const relief = span * 0.24;
+	const scatter = span * 0.22;
 
-	// Three shaded faces instead of a call to box() per cell: box() pushes a
-	// matrix, changes fill and allocates geometry every time, which cost 22 fps
-	// on desktop and 12 on a phone for the same picture.
-	for (const face of FACES) {
-		fill(face.fill);
+	// One fill for the whole cloud: shading by depth randomised the brightness and
+	// erased the features. The mask reads as a silhouette; volume comes from each
+	// point's size instead, so nearer pixels are bigger.
+	fill(20, 118, 235, 205);
+	beginShape(QUADS);
 
-		beginShape(QUADS);
-		for (let i = 0; i < cols; i += 1) {
-			for (let j = 0; j < rows; j += 1) {
-				const brightness = faceGrid[i][j];
-				if (brightness < 10) continue;
+	for (let i = 0; i < cols; i += 1) {
+		for (let j = 0; j < rows; j += 1) {
+			if (faceGrid[i][j] < 10) continue;
 
-				const x = (i + 0.5) * stepX - faceSizeW / 2;
-				const y = (j + 0.5) * stepY - faceSizeH / 2;
-				const z = faceHeight[i][j] * relief;
+			const z = faceDome[i][j] * relief + faceScatter[i][j] * scatter;
+			const x = (i + 0.5) * stepX - faceSizeW / 2;
+			const y = (j + 0.5) * stepY - faceSizeH / 2;
+			// Just over one cell: below that the cloud turns patchy (its own gaps
+			// read as noise) and well above it the points cover the dark cells that
+			// draw the eyes and the mouth.
+			const size = half * (1 + 0.16 * map(z, -scatter, relief + scatter, 0, 1));
 
-				face.draw(x, y, z, half, depth);
-			}
+			vertex(x - size, y - size, z);
+			vertex(x + size, y - size, z);
+			vertex(x + size, y + size, z);
+			vertex(x - size, y + size, z);
 		}
-		endShape();
 	}
+
+	endShape();
 }
 
 function addGlitchArtifact() {
@@ -332,24 +350,86 @@ function wrapLines(graphics, value, maxWidth) {
 	return lines;
 }
 
-/** Largest font size whose wrapped lines fit inside the raster. */
-function fitToRaster(graphics, value) {
-	const maxWidth = rasterW - RASTER_MARGIN * 2;
-	const maxHeight = rasterH - RASTER_MARGIN * 2;
+/**
+ * Splits the phrase into at most two balanced lines. Widths scale linearly with
+ * font size, so the best break is the same at any size: measure once at a
+ * reference size and keep the split with the narrowest widest line.
+ */
+function splitLines(graphics, value) {
+	const paragraphs = value.split('\n').map((line) => line.trim()).filter(Boolean);
+	if (paragraphs.length > 1) return paragraphs.slice(0, 2);
 
-	for (let size = 96; size >= 9; size -= 2) {
-		graphics.textSize(size);
-		graphics.textLeading(size * 1.12);
-		const lines = wrapLines(graphics, value, maxWidth);
-		const widest = lines.reduce((max, line) => Math.max(max, graphics.textWidth(line)), 0);
-		if (lines.length * size * 1.12 <= maxHeight && widest <= maxWidth) {
-			return { size, lines };
+	const words = (paragraphs[0] ?? '').split(/\s+/).filter(Boolean);
+	if (words.length <= 1) return words;
+
+	let best = null;
+	for (let cut = 1; cut < words.length; cut += 1) {
+		const first = words.slice(0, cut).join(' ');
+		const second = words.slice(cut).join(' ');
+		const widest = Math.max(graphics.textWidth(first), graphics.textWidth(second));
+		if (!best || widest < best.widest) best = { lines: [first, second], widest };
+	}
+	return best.lines;
+}
+
+/** Word wrap into as many lines as needed, used when two lines are too small. */
+function wrapLines(graphics, value, maxWidth) {
+	const lines = [];
+	for (const paragraph of value.split('\n')) {
+		const words = paragraph.split(/\s+/).filter(Boolean);
+		if (words.length === 0) {
+			lines.push('');
+			continue;
 		}
+
+		let line = '';
+		for (const word of words) {
+			const candidate = line ? `${line} ${word}` : word;
+			if (line && graphics.textWidth(candidate) > maxWidth) {
+				lines.push(line);
+				line = word;
+			} else {
+				line = candidate;
+			}
+		}
+		if (line) lines.push(line);
+	}
+	return lines;
+}
+
+/**
+ * Two lines by design: the phrase has to read as one wide block. Only a text too
+ * long to stay legible in two lines is allowed to wrap further.
+ */
+function layoutText(graphics, value) {
+	const maxWidth = rasterW * 0.94;
+	const maxHeight = rasterH * 0.9;
+	const reference = 120;
+
+	graphics.textSize(reference);
+	const twoLines = splitLines(graphics, value);
+	const widest = Math.max(...twoLines.map((line) => graphics.textWidth(line)));
+	const sizeForWidth = (reference * maxWidth) / Math.max(widest, 1);
+	const sizeForHeight = (reference * maxHeight) / (twoLines.length * reference * 1.12);
+	const size = Math.min(sizeForWidth, sizeForHeight);
+
+	if (size >= MIN_TWO_LINE_SIZE) {
+		return { size, lines: twoLines };
 	}
 
-	graphics.textSize(9);
-	graphics.textLeading(10);
-	return { size: 9, lines: wrapLines(graphics, value, maxWidth) };
+	// Fall back to wrapping for anything too long to survive two lines.
+	let wrappedSize = Math.min(sizeForWidth, sizeForHeight);
+	let lines = twoLines;
+	for (let attempt = Math.floor(size); attempt >= 9; attempt -= 2) {
+		graphics.textSize(attempt);
+		graphics.textLeading(attempt * 1.12);
+		lines = wrapLines(graphics, value, maxWidth);
+		if (lines.length * attempt * 1.12 <= maxHeight) {
+			wrappedSize = attempt;
+			break;
+		}
+	}
+	return { size: wrappedSize, lines };
 }
 
 /**
@@ -364,7 +444,7 @@ function rasterizePhrase(value, step) {
 	graphics.textAlign(CENTER, CENTER);
 	graphics.textFont('ui-monospace, Menlo, Consolas, monospace');
 
-	const { size, lines } = fitToRaster(graphics, value);
+	const { size, lines } = layoutText(graphics, value);
 	graphics.textSize(size);
 	graphics.textLeading(size * 1.12);
 	graphics.text(lines.join('\n'), rasterW / 2, rasterH / 2);
@@ -424,9 +504,10 @@ function buildTargets(value) {
 
 	const spanW = raster.maxX - raster.minX + step;
 	const spanH = raster.maxY - raster.minY + step;
+	const compact = Math.min(width, height) < 600;
 	const scale = Math.min(
-		(width * 0.82) / spanW,
-		(height * 0.5) / spanH,
+		(width * (compact ? 0.96 : 0.86)) / spanW,
+		(height * (compact ? 0.26 : 0.34)) / spanH,
 	);
 
 	const centerX = raster.minX + spanW / 2;
@@ -491,7 +572,9 @@ class Pixel {
 	 * themselves plus the occlusion between them.
 	 */
 	size() {
-		return this.cell * (0.45 + 0.7 * this.ease);
+		// Slightly over a cell once settled: at 1-2 px per pixel, anything less
+		// leaves gaps between strokes and thin letterforms read as dashes.
+		return this.cell * (0.5 + 0.72 * this.ease);
 	}
 }
 
@@ -519,10 +602,11 @@ function drawParticles() {
 			const { x, y } = particle.pos;
 			const z = particle.depth();
 
-			vertex(x - half, y - half, z);
-			vertex(x + half, y - half, z);
-			vertex(x + half, y + half, z);
-			vertex(x - half, y + half, z);
+			const py = y + LAYOUT.textY;
+			vertex(x - half, py - half, z);
+			vertex(x + half, py - half, z);
+			vertex(x + half, py + half, z);
+			vertex(x - half, py + half, z);
 		}
 
 		endShape();
