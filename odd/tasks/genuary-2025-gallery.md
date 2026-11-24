@@ -216,3 +216,21 @@ terminan alineadas deben terminar formando una frase en pixel font, configurable
 Medido: 1675 partículas en 1280x800 (celda 8.4px), 2147 en 390x844 (celda 3.9px).
 `check-mobile` day5 1/1, `check-gallery` 346/346, `check-api` 20/20. Thumbnail recapturado
 (la frase formada, sin UI).
+
+L13 (corrección del humano sobre L12): "eliminaste todo lo que estaba antes, me gustaba la cara
+de anonymous; el punto es juntar ambas versiones". Se recupera la cara y se suman las capas:
+
+- Vuelve WEBGL: la máscara de `mask.jpg` otra vez como relieve isométrico de cajas, con el
+  tilt de 15°, la rotación y el respiro en z.
+- La frase queda en un plano que mira a cámara, y por eso se lee: son dos capas con reglas
+  distintas en la misma escena.
+- **La frase va en z = 0, no acercada.** Al trasladarla a z=+260 la perspectiva la agrandó ×1.6
+  (cámara p5 ≈ z 693) y se salía de cuadro. En cambio la cara se empuja a z ≈ -220.
+- La cara se recorta al bounding box de lo dibujado en la imagen (muestreo cada 3px, umbral
+  24): `mask.jpg` trae márgenes negros y muestrear el archivo entero dejaba la máscara como un
+  manchón chico en el centro. Ahora llena el cuadro conservando proporción.
+- Las partículas se dibujan como un único `beginShape(QUADS)` por banda de color (8 bandas):
+  miles de `box()`/`rect()` asignan geometría cada frame, la forma inmediata no.
+- Se mantienen los conos de glitch (3D) y el panel de texto.
+
+Medido: 1675 partículas + 609 cajas de cara en 1280x800; 2147 + 1189 en 390x844.

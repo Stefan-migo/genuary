@@ -1,21 +1,21 @@
-// Genuary 2025 · Day 5 — "Isometric Art (No vanishing points)" — rebuilt.
+// Genuary 2025 · Day 5 — "Isometric Art (No vanishing points)"
 //
-// The original drew an isometric relief sampled from a photograph, with a
-// swarm of boxes drifting around it. The particles now have a destination: they
-// start scattered as warm specks and, in a left-to-right wave, assemble into a
-// line of text rendered as fat pixels. The phrase is editable (press C).
-//
-// Flat 2D on purpose: a legible pixel phrase cannot survive a rotating 15° tilt,
-// and thousands of WEBGL boxes per frame is not a phone workload.
+// Two layers with different rules in the same WEBGL scene:
+//   1. the anonymous face, sampled from mask.jpg and rebuilt as an isometric
+//      pixel relief that tilts, breathes and rotates;
+//   2. the swarm, which starts as scattered specks and assembles into a phrase
+//      made of pixels, on a plane that faces the camera so the text stays read.
+// The phrase is editable (press C).
 
 const STORAGE_KEY = 'genuary-2025-day5';
-const MAX_PIXELS = 4200;
+const MAX_PIXELS = 2600;
 
 // Free chaos before the phrase starts pulling: without it the piece reads as
 // text that happens to move, not as order emerging from noise.
 const SCATTER_HOLD = 1.5;
 
 const RASTER_MARGIN = 14;
+const DEFAULT_TEXT = 'las balas que nos tiraron van a volver';
 
 // A landscape raster on a portrait phone would leave the phrase as a thin band
 // in the middle: the raster follows the viewport so the phrase wraps into more,
@@ -23,25 +23,41 @@ const RASTER_MARGIN = 14;
 let rasterW = 560;
 let rasterH = 320;
 
-const DEFAULT_TEXT = 'las balas que nos tiraron van a volver';
-
 const STATE = {
 	text: DEFAULT_TEXT,
 	pixelSize: 4,
 };
+
+let faceImg;
+let faceGrid = [];
+let faceCell = 16;
+let faceSize = { w: 0, h: 0 };
 
 let particles = [];
 let cell = 4;
 let formationStart = 0;
 let glitches = [];
 let reformAt = 0;
+let warm;
+let cool;
+
+function preload() {
+	faceImg = loadImage('mask.jpg');
+}
 
 function setup() {
-	createCanvas(windowWidth, windowHeight);
+	createCanvas(windowWidth, windowHeight, WEBGL);
 	pixelDensity(1);
+	angleMode(DEGREES);
 	noStroke();
+	frameRate(30);
 	textFont('ui-monospace, Menlo, Consolas, monospace');
+
+	warm = color(255, 158, 82);
+	cool = color(168, 226, 255);
+
 	configureRaster();
+	buildFaceGrid();
 	loadSettings();
 	rebuild();
 	wirePanel();
@@ -50,6 +66,7 @@ function setup() {
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	configureRaster();
+	buildFaceGrid();
 	rebuild();
 }
 
@@ -60,18 +77,129 @@ function configureRaster() {
 }
 
 function draw() {
-	background(12, 12, 16);
+	background(35);
 
 	const elapsed = (millis() - formationStart) / 1000;
 
-	maybeGlitch();
+	orbitControl();
 
-	for (const particle of particles) {
-		particle.update(elapsed);
-		particle.display();
+	// --- layer 1: the face, in its own tilted space
+	push();
+	rotateX(15);
+	rotateY(sin(frameCount * 0.6) * 8);
+	// Pushed back: the phrase, not the relief, owns the camera reference plane.
+	translate(0, 0, -220 + sin(frameCount * 0.8) * 40);
+	drawFace();
+	pop();
+
+	if (frameCount % 10 === 0) addGlitchArtifact();
+
+	// --- layer 2: the phrase, on a plane facing the camera
+	for (const particle of particles) particle.update(elapsed);
+
+	// Kept at z = 0, the plane the projection was measured on: moving it toward
+	// the camera scales the phrase up and pushes it out of frame.
+	drawParticles();
+}
+
+// --------------------------------------------------------------- the face
+
+/**
+ * Bounding box of what is actually drawn in the source image. mask.jpg ships
+ * with black margins; sampling the whole file would leave the face as a small
+ * blob in the middle of the frame.
+ */
+function faceBounds() {
+	faceImg.loadPixels();
+	const step = 3;
+	let minX = faceImg.width;
+	let maxX = 0;
+	let minY = faceImg.height;
+	let maxY = 0;
+
+	for (let y = 0; y < faceImg.height; y += step) {
+		for (let x = 0; x < faceImg.width; x += step) {
+			if (faceImg.pixels[(y * faceImg.width + x) * 4] > 24) {
+				minX = Math.min(minX, x);
+				maxX = Math.max(maxX, x);
+				minY = Math.min(minY, y);
+				maxY = Math.max(maxY, y);
+			}
+		}
 	}
 
-	drawGlitches();
+	if (maxX <= minX || maxY <= minY) {
+		return { x: 0, y: 0, w: faceImg.width, h: faceImg.height };
+	}
+
+	return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+function buildFaceGrid() {
+	faceCell = constrain(Math.round(Math.min(width, height) / 30), 12, 28);
+
+	const bounds = faceBounds();
+	const aspect = bounds.w / bounds.h;
+
+	// Fill the frame while keeping the mask's own proportions.
+	let faceW = Math.min(width * 0.98, height * 0.98 * aspect);
+	let faceH = faceW / aspect;
+	if (faceH > height * 0.98) {
+		faceH = height * 0.98;
+		faceW = faceH * aspect;
+	}
+
+	faceSize = { w: faceW, h: faceH };
+
+	const cols = Math.max(1, Math.round(faceW / faceCell));
+	const rows = Math.max(1, Math.round(faceH / faceCell));
+
+	faceGrid = [];
+
+	for (let i = 0; i < cols; i += 1) {
+		const row = [];
+		for (let j = 0; j < rows; j += 1) {
+			const imgX = Math.floor(map(i, 0, cols - 1, bounds.x, bounds.x + bounds.w - 1));
+			const imgY = Math.floor(map(j, 0, rows - 1, bounds.y, bounds.y + bounds.h - 1));
+			row.push(red(faceImg.get(imgX, imgY)));
+		}
+		faceGrid.push(row);
+	}
+}
+
+function drawFace() {
+	const cols = faceGrid.length;
+	const rows = faceGrid[0].length;
+	const stepX = faceSize.w / cols;
+	const stepY = faceSize.h / rows;
+
+	for (let i = 0; i < cols; i += 1) {
+		for (let j = 0; j < rows; j += 1) {
+			const brightness = faceGrid[i][j];
+
+			// Near-black cells are the empty background of the photograph: not
+			// drawing them removes thousands of boxes and leaves the face.
+			if (brightness < 10) continue;
+
+			push();
+			translate(
+				(i + 0.5) * stepX - faceSize.w / 2,
+				(j + 0.5) * stepY - faceSize.h / 2,
+				map(brightness, 0, 255, -120, 40),
+			);
+			fill(10, 110, 255, 105);
+			box(Math.min(stepX, stepY) * 0.62);
+			pop();
+		}
+	}
+}
+
+function addGlitchArtifact() {
+	push();
+	translate(random(-width / 2, width / 2), random(-height / 2, height / 2), random(-60, 120));
+	fill(255, 60, 70, 110);
+	cone(faceCell * -6);
+	pop();
 }
 
 // ---------------------------------------------------------------- the phrase
@@ -147,8 +275,8 @@ function rasterizePhrase(value, step) {
 	let minY = Infinity;
 	let maxY = -Infinity;
 
-	// A cell counts as ink when any pixel inside its block is bright enough,
-	// so thin strokes do not disappear at large pixel sizes.
+	// A cell counts as ink when any pixel inside its block is bright enough, so
+	// thin strokes do not disappear at large pixel sizes.
 	for (let y = 0; y < rasterH; y += step) {
 		for (let x = 0; x < rasterW; x += step) {
 			let ink = 0;
@@ -178,25 +306,25 @@ function rasterizePhrase(value, step) {
 
 function buildTargets(value) {
 	const clean = value.trim();
-	if (!clean) return { targets: [], cell: STATE.pixelSize };
+	if (!clean) return { targets: [], cell: STATE.pixelSize, step: STATE.pixelSize };
 
 	let step = STATE.pixelSize;
 	let raster = rasterizePhrase(clean, step);
 
-	// A long phrase at a small step would mean tens of thousands of rects per
+	// A long phrase at a small step would mean tens of thousands of vertices per
 	// frame: grow the pixel until the count is workable, and say so in the panel.
 	while (raster.points.length > MAX_PIXELS && step < 14) {
 		step += 1;
 		raster = rasterizePhrase(clean, step);
 	}
 
-	if (raster.points.length === 0) return { targets: [], cell: step };
+	if (raster.points.length === 0) return { targets: [], cell: step, step };
 
 	const spanW = raster.maxX - raster.minX + step;
 	const spanH = raster.maxY - raster.minY + step;
 	const scale = Math.min(
-		(width * 0.86) / spanW,
-		(height * 0.58) / spanH,
+		(width * 0.82) / spanW,
+		(height * 0.5) / spanH,
 	);
 
 	const centerX = raster.minX + spanW / 2;
@@ -214,7 +342,7 @@ function buildTargets(value) {
 
 class Pixel {
 	constructor(target, size) {
-		this.home = createVector(target.x + width / 2, target.y + height / 2);
+		this.home = createVector(target.x, target.y);
 		this.pos = createVector(
 			random(-width * 0.4, width * 1.4),
 			random(-height * 0.4, height * 1.4),
@@ -223,8 +351,6 @@ class Pixel {
 		this.cell = size;
 		this.seed = random(1000);
 		this.ease = 0;
-		this.warm = color(255, random(120, 195), random(55, 105));
-		this.cool = color(random(140, 200), random(205, 240), 255);
 
 		// A wave from left to right, smeared by randomness, so the phrase does
 		// not appear all at once.
@@ -250,16 +376,42 @@ class Pixel {
 		this.pos.add(this.vel);
 	}
 
-	display() {
-		// Settled pixels grow to fill their cell so letters read as solid, and
-		// keep a slow breath so the phrase is never dead.
-		const breath = this.ease > 0.97
-			? sin(frameCount * 0.05 + this.seed) * 0.1
-			: 0;
-		const size = this.cell * (0.4 + 0.72 * this.ease + breath);
+	/** Settled pixels grow to fill their cell so letters read as solid. */
+	size() {
+		const breath = this.ease > 0.97 ? sin(frameCount * 0.05 + this.seed) * 0.1 : 0;
+		return this.cell * (0.4 + 0.72 * this.ease + breath);
+	}
+}
 
-		fill(lerpColor(this.warm, this.cool, this.ease));
-		rect(this.pos.x - size / 2, this.pos.y - size / 2, size, size);
+/**
+ * All particles go into one QUADS shape per colour band: thousands of `box()`
+ * calls would allocate geometry every frame, one immediate shape does not.
+ */
+function drawParticles() {
+	const bands = 8;
+	const groups = Array.from({ length: bands }, () => []);
+
+	for (const particle of particles) {
+		const band = Math.min(bands - 1, Math.floor(particle.ease * bands));
+		groups[band].push(particle);
+	}
+
+	for (let band = 0; band < bands; band += 1) {
+		if (groups[band].length === 0) continue;
+
+		fill(lerpColor(warm, cool, (band + 0.5) / bands));
+		beginShape(QUADS);
+
+		for (const particle of groups[band]) {
+			const half = particle.size() / 2;
+			const { x, y } = particle.pos;
+			vertex(x - half, y - half);
+			vertex(x + half, y - half);
+			vertex(x + half, y + half);
+			vertex(x - half, y + half);
+		}
+
+		endShape();
 	}
 }
 
@@ -277,31 +429,6 @@ function rebuild() {
 		count.textContent = particles.length === 0
 			? 'No text to assemble.'
 			: `${particles.length} pixels assembled${grown}`;
-	}
-}
-
-// ------------------------------------------------------------------ glitches
-
-function maybeGlitch() {
-	if (random(1) < 0.02) {
-		glitches.push({
-			x: random(-width * 0.1, width * 0.3),
-			y: random(height),
-			w: random(width * 0.25, width * 0.9),
-			h: random(1.5, 5),
-			life: 3 + Math.floor(random(4)),
-			warm: random(1) < 0.5,
-		});
-	}
-
-	glitches = glitches.filter((glitch) => glitch.life > 0);
-}
-
-function drawGlitches() {
-	for (const glitch of glitches) {
-		glitch.life -= 1;
-		fill(glitch.warm ? color(255, 58, 72, 190) : color(120, 220, 255, 170));
-		rect(glitch.x, glitch.y, glitch.w, glitch.h);
 	}
 }
 
