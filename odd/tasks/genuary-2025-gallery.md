@@ -234,3 +234,32 @@ de anonymous; el punto es juntar ambas versiones". Se recupera la cara y se suma
 - Se mantienen los conos de glitch (3D) y el panel de texto.
 
 Medido: 1675 partículas + 609 cajas de cara en 1280x800; 2147 + 1189 en 390x844.
+
+L14 (tercera vuelta del día 5): el humano pide (a) que el texto sea nube de puntos 3D legible
+sólo de frente, (b) formación más lenta, (c) más puntos y más profundidad en la máscara.
+
+- **Proyección ortográfica** (`ortho()` por frame). Con perspectiva, un punto a profundidad z
+  cae fuera de su celda según `f/(f−z)`: el texto se deshilachaba. Intenté compensarlo
+  multiplicando por `(f−z)/f` con `f = (height/2)/tan(PI/6)`, y no coincidía con la cámara real
+  de p5 (verificado forzando z=0: con z=0 el texto sale perfecto). Con `ortho()` la profundidad
+  no mueve la posición en pantalla: se lee de frente y se deshace al orbitar, que es exactamente
+  lo pedido.
+- **La erosión también venía de dos decisiones mías**: tamaño por profundidad (paralaje) y
+  "respiro" por partícula. Ambas perforaban las letras. El tamaño es uniforme; la profundidad la
+  cuentan las posiciones z y la oclusión.
+- **Formación lenta**: `SCATTER_HOLD` 1.5→2.6 s, `FORM_SECONDS` 6.5 (antes 2.4), delays 0→2.4 s
+  extra. La frase completa aparece cerca de los 9-10 s.
+- **Profundidad de la máscara**: la imagen es un gráfico plano (blanco sobre negro), así que el
+  brillo no da volumen. La altura ahora sale de un **campo de distancia** (6 pasadas de blur
+  sobre la cobertura, normalizado): la forma se infla hacia el centro como una cara empujando el
+  plano. Los cubos son más profundos que anchos (`depth = half*2.1`) y se dibujan como 3 caras
+  con distinto tono.
+- **Rendimiento**: `box()` por celda costaba 22 fps en escritorio y 12 en móvil. Las tres caras
+  van como geometría inmediata en 3 `beginShape(QUADS)`. Medido: 27 fps en 1280x800 (1632 cajas
+  dibujadas de 2280 celdas) y 43 fps en 390x844 (648 de 936). `frameRate` 30→60: el teléfono
+  estaba limitado por el techo, no por la carga.
+- El harness gana `Input.dispatchMouseEvent` en `renderPage` (`input: [...]`): los eventos DOM
+  sintéticos no mueven `orbitControl`, hizo falta entrada real para verificar el orbitado.
+
+Verificado por render: de frente la frase es sólida y legible; orbitada se deshace en nube; la
+máscara muestra volumen. `check-mobile` 1/1, `check-gallery` 346/346.

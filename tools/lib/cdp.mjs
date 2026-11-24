@@ -137,7 +137,7 @@ export async function launchChrome({ width = 1200, height = 750 } = {}) {
 		return result?.value ?? null;
 	}
 
-	async function renderPage(pageUrl, { settleMs, format = 'png', quality, act, mobile = false, clipToCanvas = false }) {
+	async function renderPage(pageUrl, { settleMs, format = 'png', quality, act, mobile = false, clipToCanvas = false, input }) {
 		const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
 		const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
 
@@ -168,6 +168,22 @@ export async function launchChrome({ width = 1200, height = 750 } = {}) {
 				}, sessionId);
 				actValue = outcome.result?.value;
 				if (outcome.exceptionDetails) actError = outcome.exceptionDetails.text;
+			}
+
+			// Real input through the browser pipeline: synthetic DOM events do not
+			// drive p5 controls such as orbitControl.
+			if (input) {
+				for (const step of input) {
+					await send('Input.dispatchMouseEvent', {
+						type: step.type,
+						x: step.x,
+						y: step.y,
+						button: 'left',
+						clickCount: 1,
+						buttons: step.type === 'mouseReleased' ? 0 : 1,
+					}, sessionId);
+					await sleep(step.waitMs ?? 16);
+				}
 			}
 
 			await sleep(settleMs);

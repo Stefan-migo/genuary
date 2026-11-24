@@ -12,7 +12,15 @@ const MAX_PIXELS = 2600;
 
 // Free chaos before the phrase starts pulling: without it the piece reads as
 // text that happens to move, not as order emerging from noise.
-const SCATTER_HOLD = 1.5;
+const SCATTER_HOLD = 2.6;
+
+// Seconds each particle takes to travel to its cell once its turn comes. With
+// the wave this puts the full phrase on screen around 9 seconds in.
+const FORM_SECONDS = 6.5;
+
+// The phrase is a cloud, not a plane: every pixel keeps its (x, y) cell and
+// scatters in z, so it reads from the front and dissolves as you orbit.
+const TEXT_DEPTH = 120;
 
 const RASTER_MARGIN = 14;
 const DEFAULT_TEXT = 'las balas que nos tiraron van a volver';
@@ -30,8 +38,10 @@ const STATE = {
 
 let faceImg;
 let faceGrid = [];
+let faceHeight = [];
 let faceCell = 16;
-let faceSize = { w: 0, h: 0 };
+let faceSizeW = 0;
+let faceSizeH = 0;
 
 let particles = [];
 let cell = 4;
@@ -40,6 +50,38 @@ let glitches = [];
 let reformAt = 0;
 let warm;
 let cool;
+
+// front, top and right of every pixel-cube, each with its own shade. Drawn every
+// frame from the same camera side, which is enough for the +/-8 degree sway.
+const FACES = [
+	{
+		fill: [12, 120, 255, 128],
+		draw: (x, y, z, h, d) => {
+			vertex(x - h, y - h, z + d);
+			vertex(x + h, y - h, z + d);
+			vertex(x + h, y + h, z + d);
+			vertex(x - h, y + h, z + d);
+		},
+	},
+	{
+		fill: [10, 92, 210, 104],
+		draw: (x, y, z, h, d) => {
+			vertex(x - h, y - h, z + d);
+			vertex(x + h, y - h, z + d);
+			vertex(x + h, y - h, z - d);
+			vertex(x - h, y - h, z - d);
+		},
+	},
+	{
+		fill: [6, 64, 170, 96],
+		draw: (x, y, z, h, d) => {
+			vertex(x + h, y - h, z + d);
+			vertex(x + h, y + h, z + d);
+			vertex(x + h, y + h, z - d);
+			vertex(x + h, y - h, z - d);
+		},
+	},
+];
 
 function preload() {
 	faceImg = loadImage('mask.jpg');
@@ -50,7 +92,8 @@ function setup() {
 	pixelDensity(1);
 	angleMode(DEGREES);
 	noStroke();
-	frameRate(30);
+	// Measured: 60 raises the desktop from 23 to 27 fps and the phone from 30 to 43.
+	frameRate(60);
 	textFont('ui-monospace, Menlo, Consolas, monospace');
 
 	warm = color(255, 158, 82);
@@ -79,6 +122,12 @@ function configureRaster() {
 function draw() {
 	background(35);
 
+	// Orthographic on purpose: under perspective, a pixel at depth z lands off
+	// its cell (that is what f / (f - z) means), so the phrase would shred. With
+	// no perspective, depth costs nothing in screen position: the phrase reads
+	// head-on and still falls apart the moment you orbit the scene.
+	ortho();
+
 	const elapsed = (millis() - formationStart) / 1000;
 
 	orbitControl();
@@ -88,7 +137,8 @@ function draw() {
 	rotateX(15);
 	rotateY(sin(frameCount * 0.6) * 8);
 	// Pushed back: the phrase, not the relief, owns the camera reference plane.
-	translate(0, 0, -220 + sin(frameCount * 0.8) * 40);
+	const span = Math.min(width, height);
+	translate(0, 0, -span * 0.42 + sin(frameCount * 0.8) * span * 0.04);
 	drawFace();
 	pop();
 
@@ -136,20 +186,25 @@ function faceBounds() {
 }
 
 function buildFaceGrid() {
-	faceCell = constrain(Math.round(Math.min(width, height) / 30), 12, 28);
+	const compact = Math.min(width, height) < 600;
 
 	const bounds = faceBounds();
 	const aspect = bounds.w / bounds.h;
 
-	// Fill the frame while keeping the mask's own proportions.
-	let faceW = Math.min(width * 0.98, height * 0.98 * aspect);
+	let faceW = Math.min(width * 0.92, height * 0.92 * aspect);
 	let faceH = faceW / aspect;
-	if (faceH > height * 0.98) {
-		faceH = height * 0.98;
+	if (faceH > height * 0.92) {
+		faceH = height * 0.92;
 		faceW = faceH * aspect;
 	}
+	faceSizeW = faceW;
+	faceSizeH = faceH;
 
-	faceSize = { w: faceW, h: faceH };
+	// Target a cell count rather than a cell size: a phone gets a coarser grid so
+	// the relief stays interactive, a desktop gets a denser one. This has to run
+	// after the face size is known, or it reads the previous resize.
+	const targetCells = compact ? 900 : 2400;
+	faceCell = constrain(Math.round(Math.sqrt((faceW * faceH) / targetCells)), compact ? 10 : 8, 30);
 
 	const cols = Math.max(1, Math.round(faceW / faceCell));
 	const rows = Math.max(1, Math.round(faceH / faceCell));
@@ -165,32 +220,79 @@ function buildFaceGrid() {
 		}
 		faceGrid.push(row);
 	}
+
+	faceHeight = buildHeightField(faceGrid);
+}
+
+/**
+ * mask.jpg is a flat graphic: white mask, black ground. Reading depth from
+ * brightness gives a flat sheet, so the volume comes from a distance field —
+ * blur the coverage a few times and the shape inflates towards its centre,
+ * like a face pressing through the plane.
+ */
+function buildHeightField(source) {
+	const cols = source.length;
+	const rows = source[0].length;
+	let field = source.map((row) => row.map((brightness) => (brightness >= 10 ? 1 : 0)));
+
+	for (let pass = 0; pass < 6; pass += 1) {
+		const next = field.map((row) => row.slice());
+		for (let i = 0; i < cols; i += 1) {
+			for (let j = 0; j < rows; j += 1) {
+				let sum = 0;
+				let count = 0;
+				for (let di = -1; di <= 1; di += 1) {
+					for (let dj = -1; dj <= 1; dj += 1) {
+						const ii = i + di;
+						const jj = j + dj;
+						if (ii < 0 || jj < 0 || ii >= cols || jj >= rows) continue;
+						sum += field[ii][jj];
+						count += 1;
+					}
+				}
+				next[i][j] = sum / count;
+			}
+		}
+		field = next;
+	}
+
+	// Normalise: the blur leaves the centre below 1, and the rim above 0.
+	let peak = 0;
+	for (const row of field) for (const value of row) peak = Math.max(peak, value);
+	if (peak <= 0) return field;
+	return field.map((row) => row.map((value) => value / peak));
 }
 
 function drawFace() {
 	const cols = faceGrid.length;
 	const rows = faceGrid[0].length;
-	const stepX = faceSize.w / cols;
-	const stepY = faceSize.h / rows;
+	const stepX = faceSizeW / cols;
+	const stepY = faceSizeH / rows;
+	const half = Math.min(stepX, stepY) * 0.36;
+	// Deeper than wide, so the top and side faces actually read as volume.
+	const depth = half * 2.1;
+	const relief = Math.min(width, height) * 0.3;
 
-	for (let i = 0; i < cols; i += 1) {
-		for (let j = 0; j < rows; j += 1) {
-			const brightness = faceGrid[i][j];
+	// Three shaded faces instead of a call to box() per cell: box() pushes a
+	// matrix, changes fill and allocates geometry every time, which cost 22 fps
+	// on desktop and 12 on a phone for the same picture.
+	for (const face of FACES) {
+		fill(face.fill);
 
-			// Near-black cells are the empty background of the photograph: not
-			// drawing them removes thousands of boxes and leaves the face.
-			if (brightness < 10) continue;
+		beginShape(QUADS);
+		for (let i = 0; i < cols; i += 1) {
+			for (let j = 0; j < rows; j += 1) {
+				const brightness = faceGrid[i][j];
+				if (brightness < 10) continue;
 
-			push();
-			translate(
-				(i + 0.5) * stepX - faceSize.w / 2,
-				(j + 0.5) * stepY - faceSize.h / 2,
-				map(brightness, 0, 255, -120, 40),
-			);
-			fill(10, 110, 255, 105);
-			box(Math.min(stepX, stepY) * 0.62);
-			pop();
+				const x = (i + 0.5) * stepX - faceSizeW / 2;
+				const y = (j + 0.5) * stepY - faceSizeH / 2;
+				const z = faceHeight[i][j] * relief;
+
+				face.draw(x, y, z, half, depth);
+			}
 		}
+		endShape();
 	}
 }
 
@@ -351,18 +453,19 @@ class Pixel {
 		this.cell = size;
 		this.seed = random(1000);
 		this.ease = 0;
+		this.z = random(-TEXT_DEPTH, TEXT_DEPTH);
 
 		// A wave from left to right, smeared by randomness, so the phrase does
 		// not appear all at once.
-		this.delay = SCATTER_HOLD + ((target.x / width) + 0.5) * 0.55 + random(0, 0.95);
+		this.delay = SCATTER_HOLD + ((target.x / width) + 0.5) * 1.3 + random(0, 2.4);
 	}
 
 	update(elapsed) {
-		const t = constrain((elapsed - this.delay) / 2.4, 0, 1);
+		const t = constrain((elapsed - this.delay) / FORM_SECONDS, 0, 1);
 		this.ease = t * t * (3 - 2 * t);
 
 		// The spring gets stiffer as the particle approaches its place.
-		const pull = 0.012 + 0.075 * this.ease;
+		const pull = 0.008 + 0.06 * this.ease;
 		this.vel.x += (this.home.x - this.pos.x) * pull;
 		this.vel.y += (this.home.y - this.pos.y) * pull;
 
@@ -376,10 +479,19 @@ class Pixel {
 		this.pos.add(this.vel);
 	}
 
-	/** Settled pixels grow to fill their cell so letters read as solid. */
+	/** Slow drift in depth keeps the cloud alive without breaking the reading. */
+	depth() {
+		return this.z + sin(frameCount * 0.02 + this.seed) * 7;
+	}
+
+	/**
+	 * Settled pixels grow slightly past their cell so letters read as solid.
+	 * No size variation by depth or by per-particle breathing: both punch holes
+	 * in the letterforms, and the depth is already carried by the z positions
+	 * themselves plus the occlusion between them.
+	 */
 	size() {
-		const breath = this.ease > 0.97 ? sin(frameCount * 0.05 + this.seed) * 0.1 : 0;
-		return this.cell * (0.4 + 0.72 * this.ease + breath);
+		return this.cell * (0.45 + 0.7 * this.ease);
 	}
 }
 
@@ -405,10 +517,12 @@ function drawParticles() {
 		for (const particle of groups[band]) {
 			const half = particle.size() / 2;
 			const { x, y } = particle.pos;
-			vertex(x - half, y - half);
-			vertex(x + half, y - half);
-			vertex(x + half, y + half);
-			vertex(x - half, y + half);
+			const z = particle.depth();
+
+			vertex(x - half, y - half, z);
+			vertex(x + half, y - half, z);
+			vertex(x + half, y + half, z);
+			vertex(x - half, y + half, z);
 		}
 
 		endShape();
