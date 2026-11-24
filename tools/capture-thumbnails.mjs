@@ -50,6 +50,7 @@ async function main() {
 					const png = await browser.renderPage(`${server.origin}/${project.path}`, {
 						settleMs: SETTLE_MS,
 						act: project.capture,
+						clipToCanvas: true,
 						format: THUMB_EXT === 'jpg' ? 'jpeg' : THUMB_EXT,
 						quality: THUMB_QUALITY,
 					});
