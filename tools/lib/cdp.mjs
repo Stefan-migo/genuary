@@ -137,7 +137,7 @@ export async function launchChrome({ width = 1200, height = 750 } = {}) {
 		return result?.value ?? null;
 	}
 
-	async function renderPage(pageUrl, { settleMs, format = 'png', quality, act }) {
+	async function renderPage(pageUrl, { settleMs, format = 'png', quality, act, mobile = false, clipToCanvas = false }) {
 		const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
 		const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
 
@@ -147,8 +147,12 @@ export async function launchChrome({ width = 1200, height = 750 } = {}) {
 				width,
 				height,
 				deviceScaleFactor: 1,
-				mobile: false,
+				mobile,
 			}, sessionId);
+
+			if (mobile) {
+				await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, sessionId);
+			}
 
 			const loaded = once('Page.loadEventFired');
 			await send('Page.navigate', { url: pageUrl }, sessionId);
@@ -168,8 +172,9 @@ export async function launchChrome({ width = 1200, height = 750 } = {}) {
 
 			await sleep(settleMs);
 
-			const rect = await canvasRect(sessionId);
-			const clip = clipFor(rect, { width, height });
+			const clip = clipToCanvas
+				? clipFor(await canvasRect(sessionId), { width, height })
+				: null;
 			const shot = { format };
 			if (quality !== undefined) shot.quality = quality;
 			if (clip) shot.clip = clip;

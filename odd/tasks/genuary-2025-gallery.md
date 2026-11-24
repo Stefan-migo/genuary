@@ -170,3 +170,25 @@ en un **panel ocultable**.
 Verificado con render headless: 390x844 y 1280x800 llenan el viewport sin bandas, panel en
 bottom sheet (12,465,366,367 dentro de 844), texto legible sobre la imagen clara, `check-gallery`
 346/346 y `check-api` 20/20.
+
+L11 (cambio transversal, "que cada uno se vea en móvil"): se agrega `tools/check-mobile.mjs`
+como definición operativa de "se ve bien en móvil" — meta viewport presente y efectiva, sin
+desborde horizontal, canvas dentro del viewport — y se arregla todo lo que falla.
+
+- Medición inicial con emulación `mobile: true` en 390x844: **5 de 31 entradas** entraban.
+- Causa dominante: 25 páginas sin `meta viewport`, así que el teléfono inventaba un layout de
+  980px y encogía todo. Segunda causa: canvas de tamaño fijo (800x800, 600x600, 400x400).
+- Solución general sin tocar el arte: `shared/mobile.css` compartido por las 26 páginas, que
+  quita el margen del body, deja que el canvas se encoja al viewport sin deformar la proporción
+  (`width/height: auto !important` + `max-width: 100%` + `max-height: 100dvh`) y centra.
+  Se usa `max-width: 100%` y no `100vw` porque day6 tiene padding propio y desbordaba justo
+  ese padding.
+- `main:has(> canvas)` para el centrado vertical: p5 1.9 envuelve el canvas en un `<main>`, y
+  el `<script>` dentro de `<body>` hace que `canvas:only-child` nunca matchee.
+- Casos que necesitaron mano propia: day6 creaba el canvas fuera de `#container` (quedaba
+  desalineado de los controles) → `.parent('container')`; day1 abría un panel dat.GUI de 320px
+  que se comía media pantalla → arranca plegado en pantallas < 600px.
+- `Page.captureScreenshot` recortaba al canvas por la lógica de thumbnails; el recorte pasa a
+  ser opt-in (`clipToCanvas`), porque para revisar layout hace falta el viewport completo.
+
+Resultado: **31/31** entran en 390x844. `check-gallery` 346/346, `check-api` 20/20.

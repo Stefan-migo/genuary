@@ -10,7 +10,7 @@ let detailSlider, detailValue, shapeSelect, colorModeSelect;
 let generateBtn, saveBtn, toggleBtn;
 
 function setup() {
-  createCanvas(800, 600);
+  createCanvas(800, 600).parent('container');
   
   // Initialize DOM elements
   detailSlider = select('#detailSlider');

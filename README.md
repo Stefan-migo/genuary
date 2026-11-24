@@ -86,6 +86,8 @@ to point elsewhere, and `RENDER_MS` to change how long a sketch is given to draw
 
 ```bash
 node tools/check-gallery.mjs
+node tools/check-mobile.mjs          # every entry in a 390x844 phone viewport
+node tools/check-api.mjs             # the day 23 function contract
 ```
 
 It fails (exit code 1) when a `projects.json` entry is missing its page, its source or a
@@ -93,9 +95,22 @@ non-blank thumbnail; when an entry does not answer HTTP 200; when the rendered g
 not show one card per project; or when a `.env` file or `node_modules` slipped into version
 control.
 
+## Mobile
+
+Every sketch links `shared/mobile.css`, which does three things and nothing else: removes the
+page margin, lets the canvas shrink to fit without distorting its aspect ratio, and centres a
+piece whose only content is the canvas. Sketches keep their own coordinate systems, so a piece
+designed as a 600x600 square stays square and is letterboxed on a tall phone.
+
+`node tools/check-mobile.mjs` is the definition of correct here: viewport meta present and
+effective, no horizontal overflow, canvas inside the viewport. It does not judge whether a piece
+looks good, only that it fits. `PHONE=430x932` checks a different device.
+
 ## Adding a sketch
 
 1. Create `dayNN/` with `index.html` and `sketch.js` (copy the shape of a neighbouring day).
+   The page needs `<meta name="viewport" content="width=device-width, initial-scale=1">` and a
+   link to `../shared/mobile.css`, or it will not fit a phone.
 2. Add an entry to `gallery/projects.json` with a unique `slug`, the `day`, the official
    `prompt`, the `credit`, `path`, `source`, and optional `tags`/`note`/`variant`.
    If the piece needs interaction to look like anything, or its controls sit over the

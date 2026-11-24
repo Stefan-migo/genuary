@@ -1938,6 +1938,12 @@ function initializeGUI() {
     gui.domElement.style.top = '10px';
     gui.domElement.style.right = '10px';
     gui.domElement.style.zIndex = '1000';
+
+    // A 320px panel eats most of a phone screen: start folded there, one tap
+    // reopens it.
+    if (window.innerWidth < 600) {
+      gui.close();
+    }
     
     // Performance folder
     let perfFolder = gui.addFolder('⚡ Performance');
